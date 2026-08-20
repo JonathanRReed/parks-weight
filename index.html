@@ -3,105 +3,65 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b0d0c">
-  <meta name="description" content="True-size map overlays of all 63 U.S. national parks, with acreage, visitors, and park facts.">
-  <title>Park / Weight — true size of the national parks</title>
+  <meta name="theme-color" content="#11150f">
+  <title>Park / Weight — see how parks stack</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
-  <header class="nav">
-    <a class="brand" href="#top">Park / Weight</a>
-    <nav>
-      <a href="#stage">Overlay</a>
-      <a href="#compare">Compare</a>
-      <a href="#atlas">All 63</a>
-    </nav>
+  <header>
+    <p class="brand">Park / Weight</p>
+    <p class="tag">All 63 U.S. national parks, real maps, real size</p>
   </header>
 
-  <main id="top">
-    <section class="intro">
-      <p class="kicker">63 U.S. national parks · real boundaries · true scale</p>
-      <h1>How big is a park,<br>next to another park?</h1>
-      <p class="lede">Every outline is the actual park map. Centroids aligned, meters kept honest. Click parks to stack them, then read the facts.</p>
+  <main>
+    <h1>See how two parks stack.</h1>
+    <p class="lead">Pick a bigger park and a smaller one. The maps are the real park shapes, drawn at the same scale.</p>
+
+    <div class="pickers">
+      <button type="button" class="picker" id="pickBig" data-role="big">
+        <span class="photo" id="bigPhoto"></span>
+        <span class="who">
+          <small>Bigger park</small>
+          <strong id="bigName">Yellowstone</strong>
+        </span>
+      </button>
+      <p class="vs">with</p>
+      <button type="button" class="picker" id="pickSmall" data-role="small">
+        <span class="photo" id="smallPhoto"></span>
+        <span class="who">
+          <small>Smaller park</small>
+          <strong id="smallName">Arches</strong>
+        </span>
+      </button>
+    </div>
+
+    <section class="stage">
+      <svg id="map" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Two park maps stacked at true size"></svg>
+      <p class="hint" id="hint"></p>
     </section>
 
-    <section class="workspace" id="stage">
-      <aside class="list-pane">
-        <input id="search" type="search" placeholder="Search parks" autocomplete="off">
-        <div class="quick">
-          <button type="button" data-set="range">Big vs small</button>
-          <button type="button" data-set="trip">This week</button>
-          <button type="button" data-set="utah">Utah</button>
-          <button type="button" data-set="clear">Clear</button>
-        </div>
-        <ul id="parkList"></ul>
-      </aside>
+    <p class="punch" id="punch"></p>
+    <div class="facts" id="facts"></div>
 
-      <div class="canvas-pane">
-        <div class="canvas-bar">
-          <label>Ground
-            <select id="ground"></select>
-          </label>
-          <p id="scaleNote"></p>
-        </div>
-        <svg id="map" viewBox="-100 -100 200 200" role="img" aria-label="National parks overlaid at true scale"></svg>
-        <ul class="legend" id="legend"></ul>
+    <section class="chooser" id="chooser" hidden>
+      <div class="chooser-bar">
+        <h2 id="chooserTitle">Pick a park</h2>
+        <button type="button" class="close" id="closeChooser">Done</button>
       </div>
-
-      <aside class="facts" id="facts">
-        <div class="photo" id="factPhoto"></div>
-        <p class="kicker" id="factKicker">Select a park</p>
-        <h2 id="factName">Park facts</h2>
-        <dl id="factStats"></dl>
-        <p id="factCopy"></p>
-        <a id="factLink" hidden target="_blank" rel="noreferrer">Wikipedia ↗</a>
-      </aside>
+      <input id="search" type="search" placeholder="Type a park name">
+      <div class="cards" id="chooserCards"></div>
     </section>
 
-    <section class="compare" id="compare">
-      <div>
-        <p class="kicker">Head to head</p>
-        <h2>Drop one park on another.</h2>
-        <div class="picks">
-          <label>Outer
-            <select id="outer"></select>
-          </label>
-          <label>Inner
-            <select id="inner"></select>
-          </label>
-        </div>
-        <p class="ratio" id="ratio"></p>
-        <div class="dual" id="dual"></div>
-      </div>
-      <svg id="duel" viewBox="-100 -100 200 200" aria-label="Two parks at true scale"></svg>
-    </section>
-
-    <section class="atlas" id="atlas">
-      <div class="atlas-head">
-        <div>
-          <p class="kicker">The full set</p>
-          <h2>All 63, ranked by land.</h2>
-        </div>
-        <select id="sort">
-          <option value="acres">Largest first</option>
-          <option value="small">Smallest first</option>
-          <option value="visitors">Most visited</option>
-          <option value="year">Oldest first</option>
-          <option value="name">A–Z</option>
-        </select>
-      </div>
-      <div class="atlas-grid" id="atlasGrid"></div>
+    <section class="all">
+      <h2>Or tap any park to compare it</h2>
+      <div class="cards" id="allCards"></div>
     </section>
   </main>
 
-  <footer>
-    <span>Park / Weight</span>
-    <span>NPS legislative boundaries · 2023 acreage &amp; visitors</span>
-    <span>Not an official NPS site</span>
-  </footer>
-  <script src="app.js"></script>
+  <footer>Park maps from the National Park Service. Not an official NPS site.</footer>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
