@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.v6.css">
+  <link rel="stylesheet" href="style.v7.css">
 </head>
 <body>
-  <svg aria-hidden="true" width="0" height="0" style="position:absolute">
+  <svg class="sprites" aria-hidden="true" focusable="false">
     <symbol id="i-stack" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M4 14l8 4 8-4M4 10l8 4 8-4M4 6l8 4 8-4"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M12 21s7-5.4 7-11a7 7 0 10-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
     <symbol id="i-people" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></symbol>
@@ -31,7 +31,7 @@
       <h2 id="obTitle"></h2>
       <p id="obCopy"></p>
       <div class="onboard-nav">
-        <button type="button" id="obSkip">Skip</button>
+        <button type="button" class="ghost" id="obSkip">Skip</button>
         <button type="button" class="primary" id="obNext">Next</button>
       </div>
       <p class="dots" id="obDots"></p>
@@ -104,6 +104,6 @@
   </main>
 
   <footer>National Park Service maps · 2023 acreage and visitors · not an official NPS site</footer>
-  <script src="app.v6.js"></script>
+  <script src="app.v7.js"></script>
 </body>
 </html>
