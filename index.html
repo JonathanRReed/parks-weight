@@ -1,10 +1,137 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10251e"><title>Park / Weight</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head>
-<body><div class="grain"></div><main>
-<section class="hero"><div class="eyebrow">A FIELD GUIDE TO SCALE <span>•</span> 2026</div><div class="hero-row"><div><h1>National parks<br>have <em>weight.</em></h1><p class="lede">An interactive atlas of all 63 U.S. national parks — built around the four from our Colorado + Utah road trip.</p></div><div class="hero-stat"><b id="visitedCount">04</b><span>parks<br>visited</span></div></div><div class="hero-actions"><button class="pill active" data-mode="visited">Our route</button><button class="pill" data-mode="all">All 63 parks</button><button class="pill" data-mode="compare">Compare scale</button></div></section>
-<section class="stage" id="stage"><div class="stage-head"><div><span class="label">SIZE / MASS</span><h2 id="stageTitle">Our four, to scale</h2></div><p id="stageCopy">Drag a park into the field. The circle is proportional to its actual acreage.</p></div><div class="scale-field" id="field"><div class="field-grid"></div><div class="field-note"><b>Area is power</b><span>Circle area — not diameter — tracks acreage.</span></div></div><div class="scale-caption" id="caption"></div></section>
-<section class="route" id="route"><div class="section-head"><div><span class="label">THE ROAD</span><h2>Colorado → Utah</h2></div><p>Four official national parks. Four wildly different ideas of “big.”</p></div><div class="route-line"></div><div class="route-cards" id="routeCards"></div></section>
-<section class="explore" id="explore"><div class="section-head"><div><span class="label">EXPLORE</span><h2>Every park, weighted</h2></div><div class="controls"><input id="search" placeholder="Find a park…"><select id="sort"><option value="acres">Largest first</option><option value="small">Smallest first</option><option value="name">A–Z</option></select></div></div><div class="filter-row"><button class="filter active" data-filter="all">All 63</button><button class="filter" data-filter="visited">Visited</button><button class="filter" data-filter="AK">Alaska</button><button class="filter" data-filter="UT">Utah</button><button class="filter" data-filter="CO">Colorado</button><button class="filter" data-filter="CA">California</button></div><div class="park-grid" id="grid"></div></section>
-<section class="compare-panel" id="compare"><div><span class="label">WEIGHT ROOM</span><h2>Put any two parks<br>on the same ground.</h2><p>Actual relative area. No tricks — just land.</p><div class="selects"><select id="parkA"></select><span>vs</span><select id="parkB"></select></div></div><div class="versus" id="versus"></div></section>
-<footer><span>PARK / WEIGHT</span><span>63 U.S. NATIONAL PARKS</span><span>Data: 2023 acreage / NPS via Wikipedia</span></footer>
-</main><template id="card"><article class="park-card"><div class="card-photo"></div><div class="card-body"><div class="card-top"><span class="state"></span><span class="rank"></span></div><h3></h3><p class="card-area"></p><div class="bar"><i></i></div><p class="card-desc"></p><a target="_blank" rel="noreferrer">Park details ↗</a></div></article></template><script src="app.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110e">
+  <meta name="description" content="All 63 U.S. national parks, drawn at true acreage. Nested overlays, atlas, and head-to-head scale.">
+  <title>Park / Weight — 63 parks, true scale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,480;9..144,700;9..144,900&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="nav">
+    <a class="brand" href="#top">Park / Weight</a>
+    <nav>
+      <a href="#overlay">Overlay</a>
+      <a href="#atlas">Atlas</a>
+      <a href="#compare">Compare</a>
+    </nav>
+    <p class="nav-meta"><span id="navCount">63</span> visited</p>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <p class="kicker">A field guide to land · 63 national parks · true acreage</p>
+      <div class="hero-grid">
+        <div>
+          <h1>The parks have <em>weight.</em></h1>
+          <p class="lede">Every U.S. national park, drawn as mass. Circles nest at real area — Wrangell–St. Elias can swallow almost everything else.</p>
+          <div class="hero-stats">
+            <div><b id="statParks">63</b><span>parks visited</span></div>
+            <div><b id="statAcres">—</b><span>acres held</span></div>
+            <div><b id="statTrip">04</b><span>this week’s route</span></div>
+          </div>
+        </div>
+        <div class="hero-nest" id="heroNest" aria-label="Nested size of five parks"></div>
+      </div>
+    </section>
+
+    <section class="overlay" id="overlay">
+      <div class="section-head">
+        <div>
+          <p class="label">01 / Overlay</p>
+          <h2>Stack any parks on the same ground.</h2>
+        </div>
+        <p>Area, not diameter. Smaller parks sit inside larger ones. Toggle parks from the rail, or drop in this week’s Colorado–Utah four.</p>
+      </div>
+      <div class="studio">
+        <aside class="rail">
+          <div class="rail-tools">
+            <input id="search" type="search" placeholder="Find a park" autocomplete="off">
+            <div class="chip-row">
+              <button class="chip active" data-preset="range" type="button">The range</button>
+              <button class="chip" data-preset="trip" type="button">This week</button>
+              <button class="chip" data-preset="all" type="button">All 63</button>
+              <button class="chip" data-preset="clear" type="button">Clear</button>
+            </div>
+          </div>
+          <ul class="park-list" id="parkList"></ul>
+        </aside>
+        <div class="stage">
+          <div class="stage-sky" id="stage" role="img" aria-label="Nested overlay of selected parks"></div>
+          <p class="stage-note" id="stageNote"></p>
+        </div>
+        <aside class="inspector" id="inspector">
+          <p class="label">Selected</p>
+          <div class="inspector-empty" id="inspectorEmpty">Click a ring or a park in the rail.</div>
+          <article class="inspector-card" id="inspectorCard" hidden>
+            <div class="inspector-photo" id="inspectorPhoto"></div>
+            <p class="mono" id="inspectorMeta"></p>
+            <h3 id="inspectorName"></h3>
+            <p class="inspector-area" id="inspectorArea"></p>
+            <p id="inspectorDesc"></p>
+            <a id="inspectorLink" target="_blank" rel="noreferrer">Wikipedia ↗</a>
+          </article>
+        </aside>
+      </div>
+    </section>
+
+    <section class="atlas" id="atlas">
+      <div class="section-head">
+        <div>
+          <p class="label">02 / Atlas</p>
+          <h2>Every park, ranked by mass.</h2>
+        </div>
+        <div class="atlas-tools">
+          <select id="sort">
+            <option value="acres">Largest first</option>
+            <option value="small">Smallest first</option>
+            <option value="name">A–Z</option>
+            <option value="year">Oldest first</option>
+            <option value="visitors">Most visited</option>
+          </select>
+          <select id="region">
+            <option value="all">All regions</option>
+            <option value="AK">Alaska</option>
+            <option value="West">West</option>
+            <option value="CO">Colorado</option>
+            <option value="UT">Utah</option>
+            <option value="CA">California</option>
+            <option value="trip">This week</option>
+          </select>
+        </div>
+      </div>
+      <div class="atlas-grid" id="atlasGrid"></div>
+    </section>
+
+    <section class="compare" id="compare">
+      <div class="compare-copy">
+        <p class="label">03 / Weight room</p>
+        <h2>Drop one park inside another.</h2>
+        <p>The small circle is the true fraction of the large one. No exaggeration.</p>
+        <div class="versus-picks">
+          <label>Outer
+            <select id="parkA"></select>
+          </label>
+          <label>Inner
+            <select id="parkB"></select>
+          </label>
+        </div>
+        <p class="ratio" id="ratioLine"></p>
+      </div>
+      <div class="versus" id="versus" aria-label="Head to head overlay"></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Park / Weight</span>
+    <span>63 U.S. National Parks · 2023 NPS acreage</span>
+    <span>Not an official NPS site</span>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

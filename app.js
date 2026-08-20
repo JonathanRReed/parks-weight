@@ -1,10 +1,233 @@
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];let parks=[],filter='all',mode='visited';
-const fmt=n=>new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(n);
-function size(p,max=150){return Math.max(22,Math.sqrt(p.acres/parks[0].acres)*max)}
-function bubble(p,i,root,vis=false){let d=document.createElement('button');d.className='bubble';let s=size(p,vis?160:130);d.style.cssText=`width:${s}px;height:${s}px;left:${(i*29+8)%75}%;top:${(i*23+12)%67}%;background:${['#c7e96b','#ed9b61','#dce6c1','#9cc9ae'][i%4]}`;d.innerHTML=`<span>${p.name}</span><small>${fmt(p.acres)} ac</small>`;d.onclick=()=>showPark(p);root.append(d)}
-function renderStage(){let set=mode==='visited'?parks.filter(p=>p.visited):parks;if(mode==='compare')set=[parks[0],parks.find(p=>p.name==='Rocky Mountain'),parks.find(p=>p.name==='Gateway Arch')];$('#field').querySelectorAll('.bubble').forEach(e=>e.remove());set.forEach((p,i)=>bubble(p,i,$('#field'),mode==='visited'));$('#stageTitle').textContent=mode==='visited'?'Our four, to scale':mode==='all'?'All 63, condensed':'The extremes, together';$('#stageCopy').textContent=mode==='visited'?'Drag a park into the field. The circle is proportional to its actual acreage.':'Every circle is scaled by land area. Try the full compare room below.';$('#caption').textContent=mode==='visited'?'Rocky Mountain is almost four times the area of Arches. Canyonlands is larger still — and Black Canyon proves drama does not require enormous acreage.':''}
-function route(){let root=$('#routeCards');parks.filter(p=>p.visited).sort((a,b)=>a.name==='Black Canyon of the Gunnison'?-1:a.name.localeCompare(b.name)).forEach((p,i)=>{let e=document.createElement('article');e.className='route-card';e.style.setProperty('--tilt',`${[-1,1,-.5,1.5][i]}deg`);e.innerHTML=`<img src="${p.image}" alt="${p.name}"><span class="num">0${i+1} / ${p.state}</span><h3>${p.name}</h3><p>${fmt(p.acres)} acres</p>`;root.append(e)})}
-function showPark(p){window.location.hash=p.name.toLowerCase().replaceAll(' ','-');let card=[...$('#grid').children].find(c=>c.dataset.name===p.name);if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.style.boxShadow='5px 6px 0 #cf5e3f';setTimeout(()=>card.style.boxShadow='',1400)}}
-function grid(){let val=$('#search').value.toLowerCase(), sort=$('#sort').value;let list=parks.filter(p=>(filter==='all'||filter==='visited'&&p.visited||p.state===filter)&&p.name.toLowerCase().includes(val));list.sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):sort==='small'?a.acres-b.acres:b.acres-a.acres);let root=$('#grid'),t=$('#card');root.innerHTML='';list.forEach(p=>{let e=t.content.cloneNode(true).firstElementChild;e.dataset.name=p.name;e.querySelector('.card-photo').style.backgroundImage=`url("${p.image}")`;e.querySelector('.state').textContent=p.visited?'✓ VISITED':p.state;e.querySelector('.rank').textContent='#'+(parks.indexOf(p)+1);e.querySelector('h3').textContent=p.name;e.querySelector('.card-area').textContent=fmt(p.acres)+' acres';e.querySelector('.bar i').style.width=Math.max(1,p.acres/parks[0].acres*100)+'%';e.querySelector('.card-desc').textContent=p.description;e.querySelector('a').href=p.wiki;root.append(e)})}
-function compare(){let a=parks.find(p=>p.name==$('#parkA').value),b=parks.find(p=>p.name==$('#parkB').value),root=$('#versus');root.innerHTML='';[a,b].sort((x,y)=>y.acres-x.acres).forEach((p,i)=>{let d=document.createElement('div');d.className='vs-bubble';let s=Math.max(40,Math.sqrt(p.acres/Math.max(a.acres,b.acres))*330);d.style.cssText=`width:${s}px;height:${s}px;bottom:0;${i?'right:5%':'left:5%'};background:${i?'#ed9b61':'#c7e96b'}`;d.innerHTML=`<div><b>${p.name}</b><small>${fmt(p.acres)} acres</small></div>`;root.append(d)})}
-fetch('parks.json').then(r=>r.json()).then(d=>{parks=d;$('#visitedCount').textContent=String(parks.filter(p=>p.visited).length).padStart(2,'0');route();renderStage();grid();let opts=parks.map(p=>`<option>${p.name}</option>`).join('');$('#parkA').innerHTML=opts;$('#parkB').innerHTML=opts;$('#parkA').value='Rocky Mountain';$('#parkB').value='Arches';compare();$$('.pill').forEach(b=>b.onclick=()=>{$$('.pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');mode=b.dataset.mode;renderStage();$('#stage').scrollIntoView({behavior:'smooth'})});$$('.filter').forEach(b=>b.onclick=()=>{$$('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.filter;grid()});$('#search').oninput=grid;$('#sort').onchange=grid;$('#parkA').onchange=compare;$('#parkB').onchange=compare;});
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const fmt = (n, d = 0) => new Intl.NumberFormat("en-US", { maximumFractionDigits: d }).format(n);
+const WEST = new Set(["AK", "HI", "WA", "OR", "CA", "NV", "ID", "UT", "AZ", "MT", "WY", "CO", "NM"]);
+const PALETTE = ["#d4f06a", "#e15b38", "#f0d38a", "#7eb8a0", "#f4f7e8", "#c07a4a", "#9cc9ae", "#dce6c1"];
+const photo = (url) => (url || "").replace("/250px-", "/800px-");
+
+let parks = [];
+let selected = new Set();
+let active = null;
+
+const byName = (name) => parks.find((p) => p.name === name);
+
+function color(p) {
+  return PALETTE[(p.rank - 1) % PALETTE.length];
+}
+
+function inspect(p) {
+  active = p;
+  $("#inspectorEmpty").hidden = true;
+  $("#inspectorCard").hidden = false;
+  $("#inspectorPhoto").style.backgroundImage = `url("${photo(p.image)}")`;
+  $("#inspectorMeta").textContent = `#${String(p.rank).padStart(2, "0")}  ·  ${p.states.join(" / ")}  ·  ${p.year || ""}`;
+  $("#inspectorName").textContent = p.name;
+  $("#inspectorArea").textContent = `${fmt(p.acres)} acres  ·  ${fmt(p.km2, 1)} km²`;
+  $("#inspectorDesc").textContent = p.description;
+  $("#inspectorLink").href = p.wiki;
+  $$(".ring").forEach((el) => el.classList.toggle("active", el.dataset.slug === p.slug));
+  $$(".atlas-card").forEach((el) => el.classList.toggle("on", el.dataset.slug === p.slug));
+}
+
+function drawNest(root, list, maxPx) {
+  root.innerHTML = "";
+  if (!list.length) return;
+  const max = Math.max(...list.map((p) => p.acres));
+  const sorted = [...list].sort((a, b) => b.acres - a.acres);
+  sorted.forEach((p, i) => {
+    const size = Math.max(18, Math.sqrt(p.acres / max) * maxPx);
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "ring";
+    el.dataset.slug = p.slug;
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+    el.style.background = color(p);
+    el.style.zIndex = String(i + 1);
+    el.style.opacity = sorted.length > 12 ? "0.86" : "0.94";
+    if (size > 72) el.innerHTML = `<span>${p.name}</span>`;
+    else el.title = p.name;
+    el.onclick = () => inspect(p);
+    root.append(el);
+  });
+}
+
+function renderHero() {
+  const sample = [
+    byName("Wrangell–St. Elias"),
+    byName("Yellowstone"),
+    byName("Rocky Mountain"),
+    byName("Arches"),
+    byName("Gateway Arch"),
+  ].filter(Boolean);
+  drawNest($("#heroNest"), sample, Math.min($("#heroNest").clientWidth, $("#heroNest").clientHeight) * 0.92);
+}
+
+function stageSize() {
+  const box = $("#stage");
+  return Math.min(box.clientWidth, box.clientHeight) * 0.9;
+}
+
+function renderStage() {
+  const list = parks.filter((p) => selected.has(p.slug));
+  drawNest($("#stage"), list, stageSize());
+  const note = $("#stageNote");
+  if (!list.length) note.textContent = "Pick parks in the rail. Area, not diameter — a park twice as wide is four times the land.";
+  else if (list.length === 1) note.textContent = `${list[0].name} sits alone at ${fmt(list[0].acres)} acres.`;
+  else {
+    const big = list.reduce((a, b) => (a.acres > b.acres ? a : b));
+    const small = list.reduce((a, b) => (a.acres < b.acres ? a : b));
+    const times = big.acres / small.acres;
+    note.textContent = `${big.name} is ${fmt(times, 1)}× the land of ${small.name}. ${list.length} parks stacked at true acreage.`;
+  }
+  $$("#parkList li").forEach((li) => li.classList.toggle("on", selected.has(li.dataset.slug)));
+}
+
+function setPreset(kind) {
+  selected = new Set();
+  if (kind === "range") {
+    ["Wrangell–St. Elias", "Yellowstone", "Rocky Mountain", "Arches", "Gateway Arch"].forEach((n) => {
+      const p = byName(n);
+      if (p) selected.add(p.slug);
+    });
+  } else if (kind === "trip") {
+    parks.filter((p) => p.trip).forEach((p) => selected.add(p.slug));
+  } else if (kind === "all") {
+    parks.forEach((p) => selected.add(p.slug));
+  }
+  $$(".chip").forEach((c) => c.classList.toggle("active", c.dataset.preset === kind));
+  renderStage();
+}
+
+function renderRail(q = "") {
+  const root = $("#parkList");
+  root.innerHTML = "";
+  parks
+    .filter((p) => p.name.toLowerCase().includes(q.toLowerCase()))
+    .forEach((p) => {
+      const li = document.createElement("li");
+      li.dataset.slug = p.slug;
+      li.innerHTML = `<i class="swatch" style="background:${color(p)}"></i><span><b>${p.name}${p.trip ? '<em class="trip-tag"> trip</em>' : ""}</b><small>${fmt(p.acres)} acres · ${p.states.join("/")}</small></span>`;
+      li.onclick = () => {
+        if (selected.has(p.slug)) selected.delete(p.slug);
+        else selected.add(p.slug);
+        $$(".chip").forEach((c) => c.classList.remove("active"));
+        renderStage();
+        inspect(p);
+      };
+      root.append(li);
+    });
+}
+
+function inRegion(p, region) {
+  if (region === "all") return true;
+  if (region === "trip") return p.trip;
+  if (region === "West") return p.states.some((s) => WEST.has(s));
+  return p.states.includes(region);
+}
+
+function renderAtlas() {
+  const sort = $("#sort").value;
+  const region = $("#region").value;
+  let list = parks.filter((p) => inRegion(p, region));
+  list.sort((a, b) => {
+    if (sort === "name") return a.name.localeCompare(b.name);
+    if (sort === "small") return a.acres - b.acres;
+    if (sort === "year") return (a.year || 9999) - (b.year || 9999);
+    if (sort === "visitors") return b.visitors - a.visitors;
+    return b.acres - a.acres;
+  });
+  const root = $("#atlasGrid");
+  root.innerHTML = "";
+  const max = parks[0].acres;
+  list.forEach((p) => {
+    const card = document.createElement("article");
+    card.className = "atlas-card";
+    card.dataset.slug = p.slug;
+    card.innerHTML = `
+      <div class="photo" style="background-image:url('${photo(p.image)}')"></div>
+      <div class="body">
+        <div class="meta"><span class="rank">#${String(p.rank).padStart(2, "0")}</span><span>${p.states.join(" / ")}${p.trip ? " · trip" : ""}</span></div>
+        <h3>${p.name}</h3>
+        <p class="acres">${fmt(p.acres)} acres</p>
+        <div class="bar"><i style="width:${Math.max(1.5, (p.acres / max) * 100)}%"></i></div>
+        <p>${p.description}</p>
+      </div>`;
+    card.onclick = () => {
+      selected.add(p.slug);
+      renderStage();
+      inspect(p);
+      $("#overlay").scrollIntoView({ behavior: "smooth" });
+    };
+    root.append(card);
+  });
+}
+
+function renderCompare() {
+  const a = byName($("#parkA").value);
+  const b = byName($("#parkB").value);
+  const root = $("#versus");
+  root.innerHTML = "";
+  if (!a || !b) return;
+  const outer = a.acres >= b.acres ? a : b;
+  const inner = a.acres >= b.acres ? b : a;
+  const box = Math.min(root.clientWidth, root.clientHeight) * 0.82;
+  [
+    [outer, box, "#d4f06a"],
+    [inner, Math.max(14, Math.sqrt(inner.acres / outer.acres) * box), "#e15b38"],
+  ].forEach(([p, size, bg], i) => {
+    const el = document.createElement("div");
+    el.className = "vs-ring";
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+    el.style.background = bg;
+    el.style.color = i ? "#07110e" : "#07110e";
+    el.style.zIndex = String(i + 1);
+    el.innerHTML = `<div><b>${p.name}</b><small>${fmt(p.acres)} acres</small></div>`;
+    root.append(el);
+  });
+  const times = outer.acres / inner.acres;
+  $("#ratioLine").textContent =
+    times >= 1.05
+      ? `${outer.name} holds ${fmt(times, 1)} of ${inner.name} inside it.`
+      : `${outer.name} and ${inner.name} are nearly the same mass.`;
+}
+
+function bind() {
+  $$(".chip").forEach((chip) => {
+    chip.onclick = () => setPreset(chip.dataset.preset);
+  });
+  $("#search").oninput = (e) => renderRail(e.target.value);
+  $("#sort").onchange = renderAtlas;
+  $("#region").onchange = renderAtlas;
+  $("#parkA").onchange = renderCompare;
+  $("#parkB").onchange = renderCompare;
+  window.addEventListener("resize", () => {
+    renderHero();
+    renderStage();
+    renderCompare();
+  });
+}
+
+fetch("parks.json")
+  .then((r) => r.json())
+  .then((data) => {
+    parks = data;
+    const acres = parks.reduce((s, p) => s + p.acres, 0);
+    $("#statParks").textContent = String(parks.length);
+    $("#navCount").textContent = String(parks.length);
+    $("#statAcres").textContent = acres >= 1e6 ? `${fmt(acres / 1e6, 1)}M` : fmt(acres);
+    $("#statTrip").textContent = String(parks.filter((p) => p.trip).length).padStart(2, "0");
+    const opts = parks.map((p) => `<option value="${p.name}">${p.name}</option>`).join("");
+    $("#parkA").innerHTML = opts;
+    $("#parkB").innerHTML = opts;
+    $("#parkA").value = "Rocky Mountain";
+    $("#parkB").value = "Arches";
+    bind();
+    renderRail();
+    renderHero();
+    setPreset("range");
+    renderAtlas();
+    renderCompare();
+    inspect(byName("Wrangell–St. Elias"));
+  });
