@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0c0e0c">
-  <meta name="description" content="Parks and Scale: all 63 U.S. national parks as real maps on one shared scale. Compare acreage, visitors, and outlines.">
+  <meta name="description" content="Parks and Scale: true-size maps of all 63 U.S. national parks, with park pages, checklists, and facts.">
   <title>Parks and Scale — the true size of U.S. national parks</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.v10.css">
+  <link rel="stylesheet" href="style.v11.css">
 </head>
 <body>
   <svg class="sprites" aria-hidden="true" focusable="false">
@@ -21,6 +21,8 @@
     <symbol id="i-shuffle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M16 3h5v5M4 20l6-6M21 3l-8 8M16 21h5v-5M15 15l6 6"/></symbol>
     <symbol id="i-north" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3l4 8h-3v10h-2V11H8z"/></symbol>
     <symbol id="i-land" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M3 18l5-8 4 5 3-4 6 7H3z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" d="M5 12l5 5 9-10"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M7 4h10v16l-5-3-5 3z"/></symbol>
   </svg>
 
   <div id="onboard" class="onboard" hidden>
@@ -38,6 +40,7 @@
 
   <header>
     <p class="brand"><svg><use href="#i-stack"/></svg> Parks and Scale</p>
+    <p class="progress" id="progress">0 of 63 visited</p>
     <div class="tools">
       <button type="button" id="btnShuffle"><svg><use href="#i-shuffle"/></svg> Random pair</button>
       <button type="button" id="btnHelp"><svg><use href="#i-stack"/></svg> How this works</button>
@@ -46,7 +49,7 @@
 
   <main>
     <h1>The true size of the national parks.</h1>
-    <p class="lead">Most maps lie about size. These don’t. Every outline is the real park boundary, and both parks share one scale — so if Arches looks tiny on Yellowstone, that’s because it is.</p>
+    <p class="lead">Compare real park maps on one scale, then open any park like a field guide. Check off where you’ve been. Save the ones still calling.</p>
 
     <div class="pickers">
       <button type="button" class="picker" id="pickBig">
@@ -78,6 +81,7 @@
         <dl id="factStats"></dl>
         <p id="factCopy"></p>
         <p class="extra" id="factExtra"></p>
+        <button type="button" class="text-link" id="openDossier">Open park page →</button>
       </aside>
     </section>
 
@@ -97,19 +101,57 @@
     </section>
 
     <section class="all">
-      <h2>All 63 parks</h2>
-      <p class="lead">Tap one to stack it on the larger park above.</p>
+      <div class="atlas-head">
+        <div>
+          <h2>The field guide</h2>
+          <p class="lead">Open a park to read it. Check it if you’ve been. Bookmark it if you want to go.</p>
+        </div>
+      </div>
+      <div class="filters" id="filters">
+        <button type="button" class="chip on" data-filter="all">All 63</button>
+        <button type="button" class="chip" data-filter="been">Been there</button>
+        <button type="button" class="chip" data-filter="saved">Saved</button>
+        <button type="button" class="chip" data-filter="left">Not yet</button>
+      </div>
+      <label class="search atlas-search">
+        <svg><use href="#i-search"/></svg>
+        <input id="atlasSearch" type="search" placeholder="Find a park">
+      </label>
       <div class="cards" id="allCards"></div>
     </section>
 
     <section class="about">
       <h2>How to read it</h2>
-      <p>Both shapes are projected locally, north-up, then centered on the same point. Area is real. A park that looks like a speck is a speck. The first U.S. national park, Yellowstone, is a useful yardstick: most of the famous Utah parks fit inside it many times over. The Alaska parks are another story — Wrangell–St. Elias is larger than several states.</p>
-      <p>Acreage and annual visitors are 2023 National Park Service figures. Boundaries are NPS legislative maps. Photos are from Wikimedia Commons. This is an independent project, not an official NPS site.</p>
+      <p>Both shapes share one scale, north-up. A speck is a speck. Checkmarks and saved parks live only on this phone or computer — nothing is uploaded. Acreage and visitors are 2023 NPS figures. Boundaries are NPS legislative maps. Not an official NPS site.</p>
     </section>
   </main>
 
+  <section class="dossier" id="dossier" hidden>
+    <div class="dossier-inner">
+      <div class="dossier-bar">
+        <p class="kicker">Park page</p>
+        <button type="button" class="icon-btn" id="closeDossier" title="Close"><svg><use href="#i-x"/></svg></button>
+      </div>
+      <div class="dossier-hero">
+        <div class="photo tall" id="dossierMap"></div>
+        <div>
+          <p class="kicker" id="dossierKicker"></p>
+          <h2 id="dossierName"></h2>
+          <div class="dossier-actions">
+            <button type="button" class="ghost" id="beenHere"><svg><use href="#i-check"/></svg> Been here</button>
+            <button type="button" class="ghost" id="savePark"><svg><use href="#i-bookmark"/></svg> Save</button>
+            <button type="button" class="primary" id="comparePark">Compare size</button>
+          </div>
+        </div>
+      </div>
+      <dl id="dossierStats"></dl>
+      <p id="dossierCopy"></p>
+      <ul class="fun" id="dossierFun"></ul>
+      <a id="dossierWiki" class="text-link" target="_blank" rel="noreferrer">Wikipedia ↗</a>
+    </div>
+  </section>
+
   <footer>Parks and Scale · NPS maps and 2023 stats · for reference, not affiliation</footer>
-  <script src="app.v10.js"></script>
+  <script src="app.v11.js"></script>
 </body>
 </html>
