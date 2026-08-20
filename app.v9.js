@@ -23,19 +23,39 @@ function radius(p) {
   return Math.max(Math.abs(x1), Math.abs(y1), Math.abs(x2), Math.abs(y2), 12);
 }
 
-function setPhoto(img, p) {
-  const fallback = p.image || "";
-  const large = fallback.replace("/250px-", "/960px-");
+function fitBox(p, pad = 1.22) {
+  const [x1, y1, x2, y2] = p.shape.bbox;
+  const cx = (x1 + x2) / 2;
+  const cy = (y1 + y2) / 2;
+  const s = Math.max(x2 - x1, y2 - y1, 24) * pad;
+  return `${cx - s / 2} ${cy - s / 2} ${s} ${s}`;
+}
+
+function miniMap(p) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", fitBox(p));
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", p.shape.d);
+  path.setAttribute("fill", p.acres > 1000000 ? "#e8c572" : "#d4784a");
+  path.setAttribute("fill-opacity", "0.9");
+  svg.append(path);
+  return svg;
+}
+
+function setPhoto(el, p) {
+  el.textContent = "";
+  el.append(miniMap(p));
+  const src = p.image || "";
+  if (!src) return;
+  const img = new Image();
   img.alt = p.name;
   img.referrerPolicy = "no-referrer";
-  img.loading = "lazy";
-  img.onerror = () => {
-    if (img.dataset.tried === "1") return;
-    img.dataset.tried = "1";
-    if (fallback) img.src = fallback;
+  img.onload = () => {
+    el.textContent = "";
+    el.append(img);
   };
-  img.dataset.tried = "";
-  img.src = large || fallback;
+  img.src = src;
 }
 
 function ordered() {
@@ -151,10 +171,8 @@ function cardEl(p, onClick) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "card";
-  const pic = document.createElement("img");
+  const pic = document.createElement("span");
   pic.className = "photo";
-  pic.width = 300;
-  pic.height = 96;
   setPhoto(pic, p);
   const body = document.createElement("span");
   body.className = "body";

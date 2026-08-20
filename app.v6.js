@@ -104,6 +104,19 @@ function draw() {
     path.addEventListener("click", () => showFacts(p, p === outer ? inner : outer));
     svg.append(path);
   });
+  const addLabel = (text, y, fill) => {
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("class", "label");
+    t.setAttribute("x", "0");
+    t.setAttribute("y", String(y));
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("fill", fill);
+    t.setAttribute("font-size", String(Math.max(r * 0.05, 20)));
+    t.textContent = text;
+    svg.append(t);
+  };
+  addLabel(outer.name, -r * 0.86, "#f4efe6");
+  addLabel(inner.name, r * 0.88, "#f4efe6");
   const times = outer.acres / inner.acres;
   $("#punch").textContent =
     times >= 1.05
@@ -179,18 +192,23 @@ function randomPair() {
   draw();
 }
 
+function hideOnboard() {
+  const el = $("#onboard");
+  el.hidden = true;
+  el.setAttribute("hidden", "");
+  try { localStorage.setItem(KEY, "1"); } catch (e) {}
+}
+
 function showOnboard(i = 0) {
   obStep = i;
-  $("#onboard").hidden = false;
+  const el = $("#onboard");
+  el.hidden = false;
+  el.removeAttribute("hidden");
   $("#obTitle").textContent = STEPS[i].title;
   $("#obCopy").textContent = STEPS[i].copy;
   $("#obDots").textContent = `${i + 1} / ${STEPS.length}`;
   $("#obNext").textContent = i === STEPS.length - 1 ? "See the parks" : "Next";
-}
-
-function hideOnboard() {
-  $("#onboard").hidden = true;
-  try { localStorage.setItem(KEY, "1"); } catch (e) {}
+  $("#obNext").focus();
 }
 
 function boot() {
@@ -213,11 +231,25 @@ function boot() {
   };
   $("#btnShuffle").onclick = randomPair;
   $("#btnHelp").onclick = () => showOnboard(0);
-  $("#obSkip").onclick = hideOnboard;
-  $("#obNext").onclick = () => {
+  $("#obSkip").onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    hideOnboard();
+  };
+  $("#obNext").onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (obStep >= STEPS.length - 1) hideOnboard();
     else showOnboard(obStep + 1);
   };
+  $("#onboard").addEventListener("click", (e) => {
+    if (e.target.id === "onboard") hideOnboard();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!$("#onboard").hidden) hideOnboard();
+    if (!$("#chooser").hidden) closeChooser();
+  });
   $("#search").oninput = (e) => renderChooser(e.target.value);
   const all = $("#allCards");
   parks.forEach((p) =>
@@ -236,10 +268,13 @@ function boot() {
   } catch (e) {}
 }
 
-Promise.all([fetch("parks.json").then((r) => r.json()), fetch("shapes.json").then((r) => r.json())]).then(
-  ([meta, geo]) => {
+Promise.all([fetch("parks.json").then((r) => r.json()), fetch("shapes.json").then((r) => r.json())])
+  .then(([meta, geo]) => {
     const shapes = Object.fromEntries(geo.parks.map((s) => [s.name, s]));
     parks = meta.filter((p) => shapes[p.name]).map((p) => ({ ...p, shape: shapes[p.name] }));
+    if (parks.length < 63) throw new Error("missing parks");
     boot();
-  }
-);
+  })
+  .catch(() => {
+    document.body.insertAdjacentText("afterbegin", "Could not load park data. Refresh and try again.");
+  });

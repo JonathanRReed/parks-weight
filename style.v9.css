@@ -80,10 +80,14 @@ h1 {
   width: 72px;
   height: 72px;
   border-radius: 12px;
-  object-fit: cover;
-  background: #222;
+  background: #0b0d0b;
   flex: none;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
 }
+.picker .photo svg, .card .photo svg { width: 86%; height: 86%; display: block; }
+.picker .photo img, .card .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .picker small { display: block; color: var(--muted); font-size: 12px; }
 .picker strong { display: block; font-size: 20px; }
 
@@ -123,7 +127,7 @@ dd { margin: 0; font-family: Fraunces, serif; font-size: 22px; }
   text-align: left;
   cursor: pointer;
 }
-.card .photo { display: block; width: 100%; height: 96px; object-fit: cover; background: #222; }
+.card .photo { display: grid; place-items: center; width: 100%; height: 110px; background: #0b0d0b; overflow: hidden; }
 .card .body { padding: 10px; display: block; }
 .card b { display: block; }
 .card small { color: var(--muted); }

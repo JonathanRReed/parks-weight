@@ -208,6 +208,7 @@ function showOnboard(i = 0) {
   $("#obCopy").textContent = STEPS[i].copy;
   $("#obDots").textContent = `${i + 1} / ${STEPS.length}`;
   $("#obNext").textContent = i === STEPS.length - 1 ? "See the parks" : "Next";
+  $("#obSkip").hidden = i === STEPS.length - 1;
   $("#obNext").focus();
 }
 
