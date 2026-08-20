@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07110e">
-  <meta name="description" content="All 63 U.S. national parks, drawn at true acreage. Nested overlays, atlas, and head-to-head scale.">
-  <title>Park / Weight — 63 parks, true scale</title>
+  <meta name="description" content="All 63 U.S. national parks as true-scale map overlays, stacked against every country.">
+  <title>Park / Weight — parks vs countries, true scale</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,480;9..144,700;9..144,900&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,23 +20,26 @@
       <a href="#atlas">Atlas</a>
       <a href="#compare">Compare</a>
     </nav>
-    <p class="nav-meta"><span id="navCount">63</span> visited</p>
+    <p class="nav-meta">63 parks · 175 countries</p>
   </header>
 
   <main id="top">
     <section class="hero">
-      <p class="kicker">A field guide to land · 63 national parks · true acreage</p>
+      <p class="kicker">True geographic scale · map silhouettes · not circles</p>
       <div class="hero-grid">
         <div>
-          <h1>The parks have <em>weight.</em></h1>
-          <p class="lede">Every U.S. national park, drawn as mass. Circles nest at real area — Wrangell–St. Elias can swallow almost everything else.</p>
+          <h1>Park maps,<br>on <em>country</em> scale.</h1>
+          <p class="lede">Actual park boundaries, centered and stacked at one shared scale with the world’s countries. Yellowstone against Switzerland. Wrangell against Britain. Arches as a speck on Belgium.</p>
           <div class="hero-stats">
-            <div><b id="statParks">63</b><span>parks visited</span></div>
-            <div><b id="statAcres">—</b><span>acres held</span></div>
-            <div><b id="statTrip">04</b><span>this week’s route</span></div>
+            <div><b>63</b><span>parks visited</span></div>
+            <div><b>175</b><span>countries to overlay</span></div>
+            <div><b>1:1</b><span>meter scale</span></div>
           </div>
         </div>
-        <div class="hero-nest" id="heroNest" aria-label="Nested size of five parks"></div>
+        <div>
+          <div class="hero-nest" id="heroNest"></div>
+          <p class="hero-caption" id="heroCaption"></p>
+        </div>
       </div>
     </section>
 
@@ -44,64 +47,64 @@
       <div class="section-head">
         <div>
           <p class="label">01 / Overlay</p>
-          <h2>Stack any parks on the same ground.</h2>
+          <h2>Drop park maps onto countries.</h2>
         </div>
-        <p>Area, not diameter. Smaller parks sit inside larger ones. Toggle parks from the rail, or drop in this week’s Colorado–Utah four.</p>
+        <p>Same projection, same meters-per-pixel. Toggle parks on the left, countries on the right. Tiny shapes get a callout so they don’t vanish.</p>
+      </div>
+      <div class="chip-row presets">
+        <button class="chip active" data-preset="range" type="button">Yellowstone vs Europe</button>
+        <button class="chip" data-preset="trip" type="button">This week vs Switzerland</button>
+        <button class="chip" data-preset="alaska" type="button">Alaska vs countries</button>
+        <button class="chip" data-preset="allparks" type="button">All 63 parks</button>
+        <button class="chip" data-preset="clear" type="button">Clear</button>
       </div>
       <div class="studio">
         <aside class="rail">
-          <div class="rail-tools">
-            <input id="search" type="search" placeholder="Find a park" autocomplete="off">
-            <div class="chip-row">
-              <button class="chip active" data-preset="range" type="button">The range</button>
-              <button class="chip" data-preset="trip" type="button">This week</button>
-              <button class="chip" data-preset="all" type="button">All 63</button>
-              <button class="chip" data-preset="clear" type="button">Clear</button>
-            </div>
-          </div>
+          <h3>Parks</h3>
+          <input id="parkSearch" type="search" placeholder="Find a park" autocomplete="off">
           <ul class="park-list" id="parkList"></ul>
         </aside>
         <div class="stage">
-          <div class="stage-sky" id="stage" role="img" aria-label="Nested overlay of selected parks"></div>
+          <svg id="stage" viewBox="-100 -100 200 200" role="img" aria-label="True-scale overlay of parks and countries"></svg>
           <p class="stage-note" id="stageNote"></p>
+          <div class="scalebar" id="scalebar"></div>
         </div>
-        <aside class="inspector" id="inspector">
-          <p class="label">Selected</p>
-          <div class="inspector-empty" id="inspectorEmpty">Click a ring or a park in the rail.</div>
-          <article class="inspector-card" id="inspectorCard" hidden>
-            <div class="inspector-photo" id="inspectorPhoto"></div>
-            <p class="mono" id="inspectorMeta"></p>
-            <h3 id="inspectorName"></h3>
-            <p class="inspector-area" id="inspectorArea"></p>
-            <p id="inspectorDesc"></p>
-            <a id="inspectorLink" target="_blank" rel="noreferrer">Wikipedia ↗</a>
-          </article>
+        <aside class="rail">
+          <h3>Countries</h3>
+          <input id="countrySearch" type="search" placeholder="Find a country" autocomplete="off">
+          <ul class="park-list" id="countryList"></ul>
         </aside>
       </div>
+      <article class="inspector-card" id="inspectorCard">
+        <div class="inspector-photo" id="inspectorPhoto"></div>
+        <div>
+          <p class="mono" id="inspectorMeta">Click a silhouette</p>
+          <h3 id="inspectorName">Nothing selected</h3>
+          <p class="inspector-area" id="inspectorArea"></p>
+          <p id="inspectorDesc">Park maps and countries share one scale. A shape twice as wide is four times the land.</p>
+        </div>
+      </article>
     </section>
 
     <section class="atlas" id="atlas">
       <div class="section-head">
         <div>
           <p class="label">02 / Atlas</p>
-          <h2>Every park, ranked by mass.</h2>
+          <h2>Every park, with its real outline.</h2>
         </div>
         <div class="atlas-tools">
           <select id="sort">
             <option value="acres">Largest first</option>
             <option value="small">Smallest first</option>
             <option value="name">A–Z</option>
-            <option value="year">Oldest first</option>
-            <option value="visitors">Most visited</option>
           </select>
           <select id="region">
-            <option value="all">All regions</option>
-            <option value="AK">Alaska</option>
-            <option value="West">West</option>
-            <option value="CO">Colorado</option>
-            <option value="UT">Utah</option>
-            <option value="CA">California</option>
+            <option value="all">All parks</option>
             <option value="trip">This week</option>
+            <option value="AK">Alaska</option>
+            <option value="UT">Utah</option>
+            <option value="CO">Colorado</option>
+            <option value="CA">California</option>
           </select>
         </div>
       </div>
@@ -111,25 +114,27 @@
     <section class="compare" id="compare">
       <div class="compare-copy">
         <p class="label">03 / Weight room</p>
-        <h2>Drop one park inside another.</h2>
-        <p>The small circle is the true fraction of the large one. No exaggeration.</p>
+        <h2>One park, one country, same ground.</h2>
+        <p>The outlines are real. The scale is honest.</p>
         <div class="versus-picks">
-          <label>Outer
+          <label>Park
             <select id="parkA"></select>
           </label>
-          <label>Inner
+          <label>Country
             <select id="parkB"></select>
           </label>
         </div>
         <p class="ratio" id="ratioLine"></p>
       </div>
-      <div class="versus" id="versus" aria-label="Head to head overlay"></div>
+      <div class="versus">
+        <svg id="versus" viewBox="-100 -100 200 200" aria-label="Park versus country"></svg>
+      </div>
     </section>
   </main>
 
   <footer>
     <span>Park / Weight</span>
-    <span>63 U.S. National Parks · 2023 NPS acreage</span>
+    <span>NPS boundaries · Natural Earth countries · equal-area overlay</span>
     <span>Not an official NPS site</span>
   </footer>
   <script src="app.js"></script>

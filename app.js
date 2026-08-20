@@ -1,233 +1,275 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const fmt = (n, d = 0) => new Intl.NumberFormat("en-US", { maximumFractionDigits: d }).format(n);
-const WEST = new Set(["AK", "HI", "WA", "OR", "CA", "NV", "ID", "UT", "AZ", "MT", "WY", "CO", "NM"]);
-const PALETTE = ["#d4f06a", "#e15b38", "#f0d38a", "#7eb8a0", "#f4f7e8", "#c07a4a", "#9cc9ae", "#dce6c1"];
-const photo = (url) => (url || "").replace("/250px-", "/800px-");
+const PARK_COLORS = ["#d4f06a", "#e15b38", "#f0d38a", "#7eb8a0", "#f4f7e8", "#c07a4a"];
+const COUNTRY_COLORS = ["#23493a", "#3e6a52", "#1f3a2e", "#4d735c", "#305544"];
 
 let parks = [];
+let shapes = { parks: [], countries: [] };
 let selected = new Set();
 let active = null;
 
-const byName = (name) => parks.find((p) => p.name === name);
+const parkMeta = (name) => parks.find((p) => p.name === name);
+const shapeByName = (name) =>
+  shapes.parks.find((s) => s.name === name) || shapes.countries.find((s) => s.name === name);
 
-function color(p) {
-  return PALETTE[(p.rank - 1) % PALETTE.length];
+function color(shape) {
+  const list = shape.kind === "park" ? shapes.parks : shapes.countries;
+  const i = Math.max(0, list.findIndex((s) => s.name === shape.name));
+  return (shape.kind === "park" ? PARK_COLORS : COUNTRY_COLORS)[i % (shape.kind === "park" ? PARK_COLORS.length : COUNTRY_COLORS.length)];
 }
 
-function inspect(p) {
-  active = p;
-  $("#inspectorEmpty").hidden = true;
-  $("#inspectorCard").hidden = false;
-  $("#inspectorPhoto").style.backgroundImage = `url("${photo(p.image)}")`;
-  $("#inspectorMeta").textContent = `#${String(p.rank).padStart(2, "0")}  ·  ${p.states.join(" / ")}  ·  ${p.year || ""}`;
-  $("#inspectorName").textContent = p.name;
-  $("#inspectorArea").textContent = `${fmt(p.acres)} acres  ·  ${fmt(p.km2, 1)} km²`;
-  $("#inspectorDesc").textContent = p.description;
-  $("#inspectorLink").href = p.wiki;
-  $$(".ring").forEach((el) => el.classList.toggle("active", el.dataset.slug === p.slug));
-  $$(".atlas-card").forEach((el) => el.classList.toggle("on", el.dataset.slug === p.slug));
+function radius(shape) {
+  const [x1, y1, x2, y2] = shape.bbox;
+  return Math.max(Math.hypot(x1, y1), Math.hypot(x2, y2), Math.hypot(x1, y2), Math.hypot(x2, y1), 8);
 }
 
-function drawNest(root, list, maxPx) {
-  root.innerHTML = "";
-  if (!list.length) return;
-  const max = Math.max(...list.map((p) => p.acres));
-  const sorted = [...list].sort((a, b) => b.acres - a.acres);
-  sorted.forEach((p, i) => {
-    const size = Math.max(18, Math.sqrt(p.acres / max) * maxPx);
-    const el = document.createElement("button");
-    el.type = "button";
-    el.className = "ring";
-    el.dataset.slug = p.slug;
-    el.style.width = `${size}px`;
-    el.style.height = `${size}px`;
-    el.style.background = color(p);
-    el.style.zIndex = String(i + 1);
-    el.style.opacity = sorted.length > 12 ? "0.86" : "0.94";
-    if (size > 72) el.innerHTML = `<span>${p.name}</span>`;
-    else el.title = p.name;
-    el.onclick = () => inspect(p);
-    root.append(el);
+function drawOverlay(svg, list, opts = {}) {
+  const dark = !!opts.dark;
+  svg.innerHTML = "";
+  if (!list.length) return 0;
+  const pad = 1.12;
+  const r = Math.max(...list.map(radius)) * pad;
+  svg.setAttribute("viewBox", `${-r} ${-r} ${2 * r} ${2 * r}`);
+  const maxR = Math.max(...list.map(radius));
+  list.forEach((shape) => {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", shape.d);
+    path.setAttribute("class", shape.kind === "park" ? "sil-park" : "sil-country");
+    path.setAttribute("fill", color(shape));
+    path.setAttribute("stroke-width", String(Math.max(r * 0.0035, 6)));
+    if (dark && shape.kind === "country") path.setAttribute("fill", "#d4f06a");
+    if (dark && shape.kind === "park") path.setAttribute("fill", "#e15b38");
+    path.dataset.name = shape.name;
+    path.addEventListener("click", (e) => {
+      e.stopPropagation();
+      inspect(shape);
+    });
+    svg.append(path);
+    if (radius(shape) / maxR < 0.045) {
+      const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      ring.setAttribute("r", String(maxR * 0.08));
+      ring.setAttribute("class", "inset");
+      svg.append(ring);
+    }
   });
+  return r;
 }
 
-function renderHero() {
-  const sample = [
-    byName("Wrangell–St. Elias"),
-    byName("Yellowstone"),
-    byName("Rocky Mountain"),
-    byName("Arches"),
-    byName("Gateway Arch"),
-  ].filter(Boolean);
-  drawNest($("#heroNest"), sample, Math.min($("#heroNest").clientWidth, $("#heroNest").clientHeight) * 0.92);
+function inspect(shape) {
+  active = shape;
+  const meta = parkMeta(shape.name);
+  $("#inspectorMeta").textContent =
+    shape.kind === "park"
+      ? `PARK  ·  ${meta ? meta.states.join(" / ") : ""}  ·  ${meta ? meta.year : ""}`
+      : `COUNTRY  ·  ${fmt(shape.km2)} km²`;
+  $("#inspectorName").textContent = shape.name;
+  $("#inspectorArea").textContent = meta
+    ? `${fmt(meta.acres)} acres  ·  ${fmt(shape.km2)} km²`
+    : `${fmt(shape.km2)} km²`;
+  $("#inspectorDesc").textContent = meta
+    ? meta.description
+    : `${shape.name} drawn at the same meter scale as the parks.`;
+  $("#inspectorPhoto").style.backgroundImage = meta ? `url("${(meta.image || "").replace("/250px-", "/800px-")}")` : "none";
+  $$("#stage path").forEach((el) => el.classList.toggle("active", el.dataset.name === shape.name));
 }
 
-function stageSize() {
-  const box = $("#stage");
-  return Math.min(box.clientWidth, box.clientHeight) * 0.9;
+function selectedShapes() {
+  return [...shapes.parks, ...shapes.countries].filter((s) => selected.has(`${s.kind}:${s.name}`));
 }
 
 function renderStage() {
-  const list = parks.filter((p) => selected.has(p.slug));
-  drawNest($("#stage"), list, stageSize());
+  const list = selectedShapes();
+  const r = drawOverlay($("#stage"), list);
   const note = $("#stageNote");
-  if (!list.length) note.textContent = "Pick parks in the rail. Area, not diameter — a park twice as wide is four times the land.";
-  else if (list.length === 1) note.textContent = `${list[0].name} sits alone at ${fmt(list[0].acres)} acres.`;
-  else {
-    const big = list.reduce((a, b) => (a.acres > b.acres ? a : b));
-    const small = list.reduce((a, b) => (a.acres < b.acres ? a : b));
-    const times = big.acres / small.acres;
-    note.textContent = `${big.name} is ${fmt(times, 1)}× the land of ${small.name}. ${list.length} parks stacked at true acreage.`;
-  }
-  $$("#parkList li").forEach((li) => li.classList.toggle("on", selected.has(li.dataset.slug)));
+  const parksOn = list.filter((s) => s.kind === "park");
+  const countriesOn = list.filter((s) => s.kind === "country");
+  if (!list.length) note.textContent = "Pick parks on the left and countries on the right. One shared scale.";
+  else if (parksOn.length && countriesOn.length) {
+    const p = parksOn.reduce((a, b) => (a.km2 > b.km2 ? a : b));
+    const c = countriesOn.reduce((a, b) => (a.km2 > b.km2 ? a : b));
+    const rel = p.km2 / c.km2;
+    note.textContent =
+      rel >= 1
+        ? `${p.name} is ${fmt(rel, 2)}× ${c.name}.`
+        : `${p.name} is ${fmt(c.km2 / p.km2, 1)}× smaller than ${c.name}.`;
+  } else note.textContent = `${list.length} outlines stacked at true scale.`;
+  if (r) {
+    const km = (r * 80) / 1000;
+    $("#scalebar").textContent = `↔ ${fmt(km * 2)} km`;
+  } else $("#scalebar").textContent = "";
+  $$("#parkList li").forEach((li) => li.classList.toggle("on", selected.has(`park:${li.dataset.name}`)));
+  $$("#countryList li").forEach((li) => li.classList.toggle("on", selected.has(`country:${li.dataset.name}`)));
+}
+
+function toggle(shape) {
+  const key = `${shape.kind}:${shape.name}`;
+  if (selected.has(key)) selected.delete(key);
+  else selected.add(key);
+  $$(".chip").forEach((c) => c.classList.remove("active"));
+  renderStage();
+  inspect(shape);
+}
+
+function renderList(root, items, kind, q = "") {
+  root.innerHTML = "";
+  items
+    .filter((s) => s.name.toLowerCase().includes(q.toLowerCase()))
+    .forEach((s) => {
+      const li = document.createElement("li");
+      li.dataset.name = s.name;
+      const sw = document.createElement("i");
+      sw.className = "swatch";
+      sw.style.background = color(s);
+      const wrap = document.createElement("span");
+      const b = document.createElement("b");
+      b.textContent = s.name;
+      if (s.trip) {
+        const tag = document.createElement("em");
+        tag.className = "trip-tag";
+        tag.textContent = " trip";
+        b.append(tag);
+      }
+      const small = document.createElement("small");
+      small.textContent = `${fmt(s.km2)} km²`;
+      wrap.append(b, small);
+      li.append(sw, wrap);
+      li.onclick = () => toggle(s);
+      root.append(li);
+    });
 }
 
 function setPreset(kind) {
   selected = new Set();
+  const add = (type, name) => {
+    const s = type === "park" ? shapes.parks.find((p) => p.name === name) : shapes.countries.find((p) => p.name === name);
+    if (s) selected.add(`${s.kind}:${s.name}`);
+  };
   if (kind === "range") {
-    ["Wrangell–St. Elias", "Yellowstone", "Rocky Mountain", "Arches", "Gateway Arch"].forEach((n) => {
-      const p = byName(n);
-      if (p) selected.add(p.slug);
-    });
+    ["Yellowstone", "Rocky Mountain", "Arches"].forEach((n) => add("park", n));
+    ["Switzerland", "Belgium", "Israel"].forEach((n) => add("country", n));
   } else if (kind === "trip") {
-    parks.filter((p) => p.trip).forEach((p) => selected.add(p.slug));
-  } else if (kind === "all") {
-    parks.forEach((p) => selected.add(p.slug));
+    shapes.parks.filter((p) => p.trip).forEach((p) => selected.add(`park:${p.name}`));
+    add("country", "Switzerland");
+  } else if (kind === "alaska") {
+    ["Wrangell–St. Elias", "Gates of the Arctic", "Denali"].forEach((n) => add("park", n));
+    ["United Kingdom", "Iceland", "Greece"].forEach((n) => add("country", n));
+  } else if (kind === "allparks") {
+    shapes.parks.forEach((p) => selected.add(`park:${p.name}`));
   }
   $$(".chip").forEach((c) => c.classList.toggle("active", c.dataset.preset === kind));
   renderStage();
 }
 
-function renderRail(q = "") {
-  const root = $("#parkList");
-  root.innerHTML = "";
-  parks
-    .filter((p) => p.name.toLowerCase().includes(q.toLowerCase()))
-    .forEach((p) => {
-      const li = document.createElement("li");
-      li.dataset.slug = p.slug;
-      li.innerHTML = `<i class="swatch" style="background:${color(p)}"></i><span><b>${p.name}${p.trip ? '<em class="trip-tag"> trip</em>' : ""}</b><small>${fmt(p.acres)} acres · ${p.states.join("/")}</small></span>`;
-      li.onclick = () => {
-        if (selected.has(p.slug)) selected.delete(p.slug);
-        else selected.add(p.slug);
-        $$(".chip").forEach((c) => c.classList.remove("active"));
-        renderStage();
-        inspect(p);
-      };
-      root.append(li);
-    });
-}
-
-function inRegion(p, region) {
-  if (region === "all") return true;
-  if (region === "trip") return p.trip;
-  if (region === "West") return p.states.some((s) => WEST.has(s));
-  return p.states.includes(region);
-}
-
 function renderAtlas() {
   const sort = $("#sort").value;
   const region = $("#region").value;
-  let list = parks.filter((p) => inRegion(p, region));
+  let list = shapes.parks.slice();
+  if (region === "trip") list = list.filter((p) => p.trip);
+  else if (region !== "all") list = list.filter((p) => (p.states || []).includes(region));
   list.sort((a, b) => {
     if (sort === "name") return a.name.localeCompare(b.name);
-    if (sort === "small") return a.acres - b.acres;
-    if (sort === "year") return (a.year || 9999) - (b.year || 9999);
-    if (sort === "visitors") return b.visitors - a.visitors;
-    return b.acres - a.acres;
+    if (sort === "small") return a.km2 - b.km2;
+    return b.km2 - a.km2;
   });
   const root = $("#atlasGrid");
   root.innerHTML = "";
-  const max = parks[0].acres;
   list.forEach((p) => {
+    const meta = parkMeta(p.name);
     const card = document.createElement("article");
     card.className = "atlas-card";
-    card.dataset.slug = p.slug;
-    card.innerHTML = `
-      <div class="photo" style="background-image:url('${photo(p.image)}')"></div>
-      <div class="body">
-        <div class="meta"><span class="rank">#${String(p.rank).padStart(2, "0")}</span><span>${p.states.join(" / ")}${p.trip ? " · trip" : ""}</span></div>
-        <h3>${p.name}</h3>
-        <p class="acres">${fmt(p.acres)} acres</p>
-        <div class="bar"><i style="width:${Math.max(1.5, (p.acres / max) * 100)}%"></i></div>
-        <p>${p.description}</p>
-      </div>`;
+    const mini = document.createElement("div");
+    mini.className = "mini";
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    mini.append(svg);
+    const body = document.createElement("div");
+    body.className = "body";
+    body.innerHTML = "";
+    const metaRow = document.createElement("div");
+    metaRow.className = "meta";
+    const rank = document.createElement("span");
+    rank.className = "rank";
+    rank.textContent = meta ? `#${String(meta.rank).padStart(2, "0")}` : "";
+    const st = document.createElement("span");
+    st.textContent = (p.states || []).join(" / ");
+    metaRow.append(rank, st);
+    const h3 = document.createElement("h3");
+    h3.textContent = p.name;
+    const acres = document.createElement("p");
+    acres.className = "acres";
+    acres.textContent = meta ? `${fmt(meta.acres)} acres` : `${fmt(p.km2)} km²`;
+    body.append(metaRow, h3, acres);
+    card.append(mini, body);
     card.onclick = () => {
-      selected.add(p.slug);
+      selected.add(`park:${p.name}`);
       renderStage();
       inspect(p);
       $("#overlay").scrollIntoView({ behavior: "smooth" });
     };
     root.append(card);
+    drawOverlay(svg, [p]);
   });
 }
 
 function renderCompare() {
-  const a = byName($("#parkA").value);
-  const b = byName($("#parkB").value);
-  const root = $("#versus");
-  root.innerHTML = "";
-  if (!a || !b) return;
-  const outer = a.acres >= b.acres ? a : b;
-  const inner = a.acres >= b.acres ? b : a;
-  const box = Math.min(root.clientWidth, root.clientHeight) * 0.82;
-  [
-    [outer, box, "#d4f06a"],
-    [inner, Math.max(14, Math.sqrt(inner.acres / outer.acres) * box), "#e15b38"],
-  ].forEach(([p, size, bg], i) => {
-    const el = document.createElement("div");
-    el.className = "vs-ring";
-    el.style.width = `${size}px`;
-    el.style.height = `${size}px`;
-    el.style.background = bg;
-    el.style.color = i ? "#07110e" : "#07110e";
-    el.style.zIndex = String(i + 1);
-    el.innerHTML = `<div><b>${p.name}</b><small>${fmt(p.acres)} acres</small></div>`;
-    root.append(el);
-  });
-  const times = outer.acres / inner.acres;
+  const park = shapes.parks.find((p) => p.name === $("#parkA").value);
+  const country = shapes.countries.find((p) => p.name === $("#parkB").value);
+  const svg = $("#versus");
+  if (!park || !country) return;
+  drawOverlay(svg, [country, park], { dark: true });
+  const times = country.km2 / park.km2;
   $("#ratioLine").textContent =
     times >= 1.05
-      ? `${outer.name} holds ${fmt(times, 1)} of ${inner.name} inside it.`
-      : `${outer.name} and ${inner.name} are nearly the same mass.`;
+      ? `${country.name} holds ${fmt(times, 1)} of ${park.name} inside it.`
+      : `${park.name} is about the size of ${country.name}.`;
+}
+
+function renderHero() {
+  const list = ["Switzerland", "Yellowstone", "Rocky Mountain", "Arches"]
+    .map(shapeByName)
+    .filter(Boolean);
+  drawOverlay($("#heroNest"), list, { dark: true });
+  $("#heroCaption").textContent = "Switzerland · Yellowstone · Rocky Mountain · Arches";
 }
 
 function bind() {
   $$(".chip").forEach((chip) => {
     chip.onclick = () => setPreset(chip.dataset.preset);
   });
-  $("#search").oninput = (e) => renderRail(e.target.value);
+  $("#parkSearch").oninput = (e) => renderList($("#parkList"), shapes.parks, "park", e.target.value);
+  $("#countrySearch").oninput = (e) => renderList($("#countryList"), shapes.countries, "country", e.target.value);
   $("#sort").onchange = renderAtlas;
   $("#region").onchange = renderAtlas;
   $("#parkA").onchange = renderCompare;
   $("#parkB").onchange = renderCompare;
-  window.addEventListener("resize", () => {
-    renderHero();
-    renderStage();
-    renderCompare();
-  });
 }
 
-fetch("parks.json")
-  .then((r) => r.json())
-  .then((data) => {
-    parks = data;
-    const acres = parks.reduce((s, p) => s + p.acres, 0);
-    $("#statParks").textContent = String(parks.length);
-    $("#navCount").textContent = String(parks.length);
-    $("#statAcres").textContent = acres >= 1e6 ? `${fmt(acres / 1e6, 1)}M` : fmt(acres);
-    $("#statTrip").textContent = String(parks.filter((p) => p.trip).length).padStart(2, "0");
-    const opts = parks.map((p) => `<option value="${p.name}">${p.name}</option>`).join("");
-    $("#parkA").innerHTML = opts;
-    $("#parkB").innerHTML = opts;
-    $("#parkA").value = "Rocky Mountain";
-    $("#parkB").value = "Arches";
+Promise.all([fetch("parks.json").then((r) => r.json()), fetch("shapes.json").then((r) => r.json())]).then(
+  ([meta, geo]) => {
+    parks = meta;
+    const trip = new Set(meta.filter((p) => p.trip).map((p) => p.name));
+    const states = Object.fromEntries(meta.map((p) => [p.name, p.states]));
+    shapes.parks = geo.parks.map((p) => ({ ...p, kind: "park", trip: trip.has(p.name), states: states[p.name] || [] }));
+    shapes.countries = geo.countries.map((c) => ({ ...c, kind: "country" }));
+    const fillSelect = (el, items) => {
+      el.textContent = "";
+      items.forEach((item) => {
+        const opt = document.createElement("option");
+        opt.value = item.name;
+        opt.textContent = item.name;
+        el.append(opt);
+      });
+    };
+    fillSelect($("#parkA"), shapes.parks);
+    fillSelect($("#parkB"), shapes.countries);
+    $("#parkA").value = "Yellowstone";
+    $("#parkB").value = "Switzerland";
     bind();
-    renderRail();
+    renderList($("#parkList"), shapes.parks, "park");
+    renderList($("#countryList"), shapes.countries, "country");
     renderHero();
     setPreset("range");
     renderAtlas();
     renderCompare();
-    inspect(byName("Wrangell–St. Elias"));
-  });
+  }
+);
