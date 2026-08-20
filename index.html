@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.v9.css">
+  <link rel="stylesheet" href="style.v10.css">
 </head>
 <body>
   <svg class="sprites" aria-hidden="true" focusable="false">
@@ -50,7 +50,7 @@
 
     <div class="pickers">
       <button type="button" class="picker" id="pickBig">
-        <img class="photo" id="bigPhoto" alt="" width="72" height="72" referrerpolicy="no-referrer">
+        <span class="photo" id="bigPhoto"></span>
         <span>
           <small><svg><use href="#i-land"/></svg> Larger park</small>
           <strong id="bigName">Yellowstone</strong>
@@ -58,7 +58,7 @@
       </button>
       <button type="button" class="icon-btn" id="btnSwap" title="Swap parks"><svg><use href="#i-swap"/></svg></button>
       <button type="button" class="picker" id="pickSmall">
-        <img class="photo" id="smallPhoto" alt="" width="72" height="72" referrerpolicy="no-referrer">
+        <span class="photo" id="smallPhoto"></span>
         <span>
           <small><svg><use href="#i-pin"/></svg> Smaller park</small>
           <strong id="smallName">Arches</strong>
@@ -110,6 +110,6 @@
   </main>
 
   <footer>Parks and Scale · NPS maps and 2023 stats · for reference, not affiliation</footer>
-  <script src="app.v9.js"></script>
+  <script src="app.v10.js"></script>
 </body>
 </html>
