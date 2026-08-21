@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.v12.css">
+  <link rel="stylesheet" href="style.v13.css">
 </head>
 <body>
   <svg class="sprites" aria-hidden="true" focusable="false">
@@ -74,6 +74,15 @@
       <div class="stage">
         <svg id="map" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Two land maps stacked at true size"></svg>
         <p class="north" title="North is up"><svg><use href="#i-north"/></svg> N</p>
+        <div id="mapChrome" class="map-chrome" hidden>
+          <div class="map-legend" id="mapLegend"></div>
+          <div class="map-actions">
+            <label class="map-check"><input type="checkbox" id="focusState"> This state only</label>
+            <label class="map-check"><input type="checkbox" id="connectVisited"> Connect visited</label>
+            <button type="button" class="ghost compact" id="btnFit">Fit markers</button>
+            <button type="button" class="primary compact" id="btnArt">Print art</button>
+          </div>
+        </div>
         <p class="hint" id="hint"></p>
       </div>
       <aside class="facts" id="factsPanel">
@@ -154,7 +163,24 @@
     </div>
   </section>
 
+  <section class="art" id="artModal" hidden>
+    <div class="art-inner">
+      <div class="dossier-bar">
+        <p class="kicker">Printable art</p>
+        <button type="button" class="icon-btn" id="closeArt" title="Close"><svg><use href="#i-x"/></svg></button>
+      </div>
+      <div class="art-tools">
+        <button type="button" class="chip kind" id="artUsa">USA visited</button>
+        <button type="button" class="chip kind" id="artPark">This park</button>
+        <label class="map-check"><input type="checkbox" id="artConnect" checked> Connect visited</label>
+        <button type="button" class="ghost compact" id="artDownload">Download SVG</button>
+        <button type="button" class="primary compact" id="artPrint">Print</button>
+      </div>
+      <div class="art-preview" id="artPreview"></div>
+    </div>
+  </section>
+
   <footer>Parks and Scale · NPS, USFS, and PAD-US maps · for reference, not affiliation</footer>
-  <script src="app.v12.js"></script>
+  <script src="app.v13.js"></script>
 </body>
 </html>
