@@ -37,6 +37,11 @@ let kindFilter = "all";
 let listFilter = "all";
 let chooserKind = "all";
 let stateFilter = "";
+let mapMode = false;
+let mapScale = 1;
+let mapTx = 0;
+let mapTy = 0;
+let mapDrag = null;
 let visited = new Set();
 let saved = new Set();
 
@@ -165,7 +170,7 @@ function updateProgress() {
   $("#progress").textContent = `${visited.size} of ${fmt(parks.length)} places visited · ${saved.size} saved`;
 }
 
-function draw() {
+function renderCompareMode() {
   const [outer, inner] = ordered();
   if (!outer || !inner) return;
   bigName = outer.slug;
@@ -217,6 +222,100 @@ function draw() {
   history.replaceState(null, "", `#${encodeURIComponent(outer.slug)}/${encodeURIComponent(inner.slug)}`);
   updateProgress();
 }
+
+function renderUsMapMode() {
+  const svg = $("#map");
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  svg.setAttribute("viewBox", "-180 -90 360 180");
+
+  const places = atlasList();
+  const layer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  layer.setAttribute("class", "map-layer");
+  layer.setAttribute("transform", `translate(${mapTx} ${mapTy}) scale(${mapScale})`);
+
+  const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  bg.setAttribute("x", "-180");
+  bg.setAttribute("y", "-90");
+  bg.setAttribute("width", "360");
+  bg.setAttribute("height", "180");
+  bg.setAttribute("fill", "none");
+  bg.setAttribute("stroke", "rgba(244, 239, 230, 0.22)");
+  bg.setAttribute("stroke-width", "0.4");
+  layer.append(bg);
+
+  places.forEach((p) => {
+    const lon = p.lon;
+    const lat = p.lat;
+    if (typeof lon !== "number" || typeof lat !== "number") return;
+    const cx = lon;
+    const cy = -lat;
+    const id = slug(p);
+    const visitedHere = visited.has(id);
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    const size = Math.min(3.8, Math.max(1.3, Math.log10(Math.max(2, p.acres)) / 4));
+    dot.setAttribute("cx", String(cx));
+    dot.setAttribute("cy", String(cy));
+    dot.setAttribute("r", String(size));
+    dot.setAttribute("fill", fillFor(p));
+    dot.setAttribute("stroke", visitedHere ? "#84f4a4" : "rgba(244, 239, 230, 0.55)");
+    dot.setAttribute("stroke-width", visitedHere ? "0.8" : "0.4");
+    dot.setAttribute("data-name", p.name);
+    dot.setAttribute("title", `${p.name} — ${kindLabel(kindOf(p))} (${visitedHere ? "visited" : "not yet"})`);
+    dot.addEventListener("click", () => openDossier(p));
+    layer.append(dot);
+
+    if (stateFilter && !(p.states || []).includes(stateFilter)) return;
+    if (visitedHere) {
+      const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      halo.setAttribute("cx", String(cx));
+      halo.setAttribute("cy", String(cy));
+      halo.setAttribute("r", String(size + 0.6));
+      halo.setAttribute("fill", "none");
+      halo.setAttribute("stroke", "#9ef2a5");
+      halo.setAttribute("stroke-width", "0.3");
+      halo.setAttribute("opacity", "0.7");
+      layer.append(halo);
+    }
+  });
+
+  const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  title.setAttribute("x", "-176");
+  title.setAttribute("y", "-79");
+  title.setAttribute("fill", "#d5ddd2");
+  title.setAttribute("font-size", "5");
+  title.textContent = `Showing ${fmt(places.length)} places · green = visited`;
+  layer.append(title);
+
+  svg.append(layer);
+  syncMapTransform();
+  $("#punch").textContent = "Showing every selected place on a U.S. map.";
+  $("#hint").textContent = "Scroll to zoom; drag to pan; click any dot for details.";
+  $("#pairNote").textContent = "In this view, circles are sized by relative scale.";
+  updateProgress();
+}
+
+function syncMapTransform() {
+  const layer = $("#map").querySelector(".map-layer");
+  if (layer) layer.setAttribute("transform", `translate(${mapTx} ${mapTy}) scale(${mapScale})`);
+}
+
+function setMapMode(on) {
+  mapMode = on;
+  const btn = $("#btnMap");
+  btn.classList.toggle("on", mapMode);
+  if (mapMode) {
+    mapScale = 1;
+    mapTx = 0;
+    mapTy = 0;
+  }
+  draw();
+}
+
+function draw() {
+  if (mapMode) return renderUsMapMode();
+  renderCompareMode();
+}
+
 
 function openDossier(p) {
   dossierPark = p;
@@ -528,6 +627,7 @@ function boot() {
   };
   $("#btnShuffle").onclick = randomPair;
   $("#btnHelp").onclick = () => showOnboard(0);
+  $("#btnMap").onclick = () => setMapMode(!mapMode);
   $("#obSkip").onclick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -578,8 +678,12 @@ function boot() {
   $("#statePick").onchange = (e) => {
     stateFilter = e.target.value;
     renderAtlas();
+    if (mapMode) draw();
   };
-  $("#atlasSearch").oninput = renderAtlas;
+  $("#atlasSearch").oninput = (e) => {
+    renderAtlas();
+    if (mapMode) draw();
+  };
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if (!$("#onboard").hidden) hideOnboard();
@@ -587,6 +691,38 @@ function boot() {
     if (!$("#dossier").hidden) closeDossier();
   });
   $("#search").oninput = (e) => renderChooser(e.target.value);
+  const map = $("#map");
+  map.addEventListener(
+    "wheel",
+    (e) => {
+      if (!mapMode) return;
+      e.preventDefault();
+      const scaleBy = e.deltaY < 0 ? 1.12 : 0.9;
+      mapScale = Math.min(10, Math.max(0.4, mapScale * scaleBy));
+      syncMapTransform();
+    },
+    { passive: false }
+  );
+  map.addEventListener("pointerdown", (e) => {
+    if (!mapMode) return;
+    map.setPointerCapture(e.pointerId);
+    mapDrag = { x: e.clientX, y: e.clientY, tx: mapTx, ty: mapTy };
+  });
+  map.addEventListener("pointermove", (e) => {
+    if (!mapMode || !mapDrag) return;
+    mapTx = mapDrag.tx + (e.clientX - mapDrag.x) / 180;
+    mapTy = mapDrag.ty + (e.clientY - mapDrag.y) / 180;
+    syncMapTransform();
+  });
+  map.addEventListener("pointerup", (e) => {
+    if (mapDrag) {
+      mapDrag = null;
+      map.releasePointerCapture(e.pointerId);
+    }
+  });
+  map.addEventListener("pointerleave", () => {
+    mapDrag = null;
+  });
   fillStatePick();
   renderFilters();
   draw();
