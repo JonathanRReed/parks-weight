@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0c0e0c">
-  <meta name="description" content="Parks and Scale: true-size maps of all 63 U.S. national parks, with park pages, checklists, and facts.">
-  <title>Parks and Scale — the true size of U.S. national parks</title>
+  <meta name="description" content="Parks and Scale: true-size maps of U.S. national parks, national forests, state forests, and state parks.">
+  <title>Parks and Scale — the true size of U.S. parks and forests</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.v11.css">
+  <link rel="stylesheet" href="style.v12.css">
 </head>
 <body>
   <svg class="sprites" aria-hidden="true" focusable="false">
@@ -40,7 +40,7 @@
 
   <header>
     <p class="brand"><svg><use href="#i-stack"/></svg> Parks and Scale</p>
-    <p class="progress" id="progress">0 of 63 visited</p>
+    <p class="progress" id="progress">0 visited</p>
     <div class="tools">
       <button type="button" id="btnShuffle"><svg><use href="#i-shuffle"/></svg> Random pair</button>
       <button type="button" id="btnHelp"><svg><use href="#i-stack"/></svg> How this works</button>
@@ -48,14 +48,14 @@
   </header>
 
   <main>
-    <h1>The true size of the national parks.</h1>
-    <p class="lead">Compare real park maps on one scale, then open any park like a field guide. Check off where you’ve been. Save the ones still calling.</p>
+    <h1>The true size of parks and forests.</h1>
+    <p class="lead">National parks, national forests, state forests, and state parks on one scale. Overlay any two. Check off where you’ve been.</p>
 
     <div class="pickers">
       <button type="button" class="picker" id="pickBig">
         <span class="photo" id="bigPhoto"></span>
         <span>
-          <small><svg><use href="#i-land"/></svg> Larger park</small>
+          <small><svg><use href="#i-land"/></svg> Larger</small>
           <strong id="bigName">Yellowstone</strong>
         </span>
       </button>
@@ -63,7 +63,7 @@
       <button type="button" class="picker" id="pickSmall">
         <span class="photo" id="smallPhoto"></span>
         <span>
-          <small><svg><use href="#i-pin"/></svg> Smaller park</small>
+          <small><svg><use href="#i-pin"/></svg> Smaller</small>
           <strong id="smallName">Arches</strong>
         </span>
       </button>
@@ -71,7 +71,7 @@
 
     <section class="workspace">
       <div class="stage">
-        <svg id="map" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Two park maps stacked at true size"></svg>
+        <svg id="map" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Two land maps stacked at true size"></svg>
         <p class="north" title="North is up"><svg><use href="#i-north"/></svg> N</p>
         <p class="hint" id="hint"></p>
       </div>
@@ -81,7 +81,7 @@
         <dl id="factStats"></dl>
         <p id="factCopy"></p>
         <p class="extra" id="factExtra"></p>
-        <button type="button" class="text-link" id="openDossier">Open park page →</button>
+        <button type="button" class="text-link" id="openDossier">Open page →</button>
       </aside>
     </section>
 
@@ -90,12 +90,13 @@
 
     <section class="chooser" id="chooser" hidden>
       <div class="chooser-bar">
-        <h2 id="chooserTitle">Pick a park</h2>
+        <h2 id="chooserTitle">Pick a place</h2>
         <button type="button" class="icon-btn" id="closeChooser" title="Close"><svg><use href="#i-x"/></svg></button>
       </div>
+      <div class="filters" id="chooserKinds"></div>
       <label class="search">
         <svg><use href="#i-search"/></svg>
-        <input id="search" type="search" placeholder="Search parks">
+        <input id="search" type="search" placeholder="Search parks and forests">
       </label>
       <div class="cards" id="chooserCards"></div>
     </section>
@@ -104,32 +105,33 @@
       <div class="atlas-head">
         <div>
           <h2>The field guide</h2>
-          <p class="lead">Open a park to read it. Check it if you’ve been. Bookmark it if you want to go.</p>
+          <p class="lead">Open a place to read it. Check it if you’ve been. Bookmark it if you want to go.</p>
         </div>
       </div>
-      <div class="filters" id="filters">
-        <button type="button" class="chip on" data-filter="all">All 63</button>
-        <button type="button" class="chip" data-filter="been">Been there</button>
-        <button type="button" class="chip" data-filter="saved">Saved</button>
-        <button type="button" class="chip" data-filter="left">Not yet</button>
+      <div class="filters" id="filters"></div>
+      <div class="atlas-tools">
+        <select class="state-pick" id="statePick" aria-label="Filter by state">
+          <option value="">All states</option>
+        </select>
       </div>
+      <p class="atlas-note" id="atlasNote"></p>
       <label class="search atlas-search">
         <svg><use href="#i-search"/></svg>
-        <input id="atlasSearch" type="search" placeholder="Find a park">
+        <input id="atlasSearch" type="search" placeholder="Find a park or forest">
       </label>
       <div class="cards" id="allCards"></div>
     </section>
 
     <section class="about">
       <h2>How to read it</h2>
-      <p>Both shapes share one scale, north-up. A speck is a speck. Checkmarks and saved parks live only on this phone or computer — nothing is uploaded. Acreage and visitors are 2023 NPS figures. Boundaries are NPS legislative maps. Not an official NPS site.</p>
+      <p>Both shapes share one scale, north-up. A speck is a speck. Checkmarks and saved places live only on this phone or computer. National park acreage and visitors are 2023 NPS figures. Forest and state-park outlines come from USFS administrative boundaries and USGS PAD-US. Tiny islands are dropped so phones don’t melt. Not an official NPS or Forest Service site.</p>
     </section>
   </main>
 
   <section class="dossier" id="dossier" hidden>
     <div class="dossier-inner">
       <div class="dossier-bar">
-        <p class="kicker">Park page</p>
+        <p class="kicker">Place page</p>
         <button type="button" class="icon-btn" id="closeDossier" title="Close"><svg><use href="#i-x"/></svg></button>
       </div>
       <div class="dossier-hero">
@@ -151,7 +153,7 @@
     </div>
   </section>
 
-  <footer>Parks and Scale · NPS maps and 2023 stats · for reference, not affiliation</footer>
-  <script src="app.v11.js"></script>
+  <footer>Parks and Scale · NPS, USFS, and PAD-US maps · for reference, not affiliation</footer>
+  <script src="app.v12.js"></script>
 </body>
 </html>
