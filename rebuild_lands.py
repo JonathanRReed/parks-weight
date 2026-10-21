@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
-"""Build extra true-scale lands for Parks and Scale: national forests, state forests, state parks."""
+"""Build extra true-scale lands for Parks and Scale.
+
+`python3 rebuild_lands.py` rebuilds national forests, state forests, and state parks.
+`python3 rebuild_lands.py --states` writes compact state outlines for the U.S. map.
+`python3 rebuild_lands.py --federal` fetches national monuments and NPS recreation areas,
+seashores, and lakeshores, and merges them into the existing JSON without touching other kinds.
+"""
 from __future__ import annotations
 
 import json
 import math
 import re
+import sys
 import time
 import urllib.parse
 import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
-OUT = Path("/tmp/parks-weve-been")
+OUT = Path(__file__).resolve().parent
 CACHE = Path("/tmp/pas-build")
 CACHE.mkdir(parents=True, exist_ok=True)
 
@@ -24,8 +31,15 @@ USFS = "https://apps.fs.usda.gov/arcx/rest/services/EDW/EDW_ForestSystemBoundari
 PAD = "https://services.arcgis.com/v01gqwM5QqNysAAi/arcgis/rest/services/PADUS_Protected_Areas_National/FeatureServer/0"
 STATES_URL = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json"
 
+FEDERAL_JOBS = (
+    ("national_monument", "Des_Tp='NM'"),
+    ("national_recreation", "Mang_Name='NPS' AND Des_Tp IN ('NRA','NLS')"),
+)
+
 KIND_META = {
     "national_forest": "National forest",
+    "national_monument": "National monument",
+    "national_recreation": "National recreation area, seashore, or lakeshore",
     "state_forest": "State forest",
     "state_park": "State park",
 }
@@ -292,7 +306,15 @@ def lookup_state(lon, lat, state_polys):
         for ring in rings:
             if point_in_ring(lon, lat, ring):
                 return st
-    return ""
+    # Coastal units (seashores, barrier islands) centre offshore of the coarse state outlines.
+    best, best_d = "", 1.0
+    for st, rings in state_polys:
+        for ring in rings:
+            for x, y in ring:
+                d = math.hypot(x - lon, y - lat)
+                if d < best_d:
+                    best, best_d = st, d
+    return best
 
 
 def clean_name(name: str) -> str:
@@ -367,6 +389,55 @@ def rank_kind(units, kind):
         u["shape"]["states"] = u["states"]
 
 
+def main_states():
+    """Write compact state outlines (lon/lat rings) for the U.S. map."""
+    out = []
+    for st, rings in load_states():
+        if len(st) != 2 or st in ("PR", "VI"):
+            continue
+        out.append({"st": st, "rings": [[[round(x, 2), round(y, 2)] for x, y in ring] for ring in rings]})
+    (OUT / "us-states.json").write_text(json.dumps(out, separators=(",", ":")))
+    print("wrote us-states.json", len(out), "states")
+
+
+# PAD-US reports only the land part of these units, so their acreage would mislead a size comparison.
+MARINE = re.compile(r"marine national monument|buck island reef", re.I)
+
+
+def main_federal():
+    state_polys = load_states()
+    units = []
+    for kind, where in FEDERAL_JOBS:
+        print(kind)
+        feats = fetch_all(PAD, where, "Unit_Nm,GIS_AcrsDb,ST_Name,Des_Tp", offset_deg=0.01, page=200)
+        for feat in feats:
+            a = feat.get("attributes") or {}
+            u = feature_to_unit(feat, kind, a.get("Unit_Nm"), a.get("GIS_AcrsDb"), state_polys)
+            if u and not MARINE.search(u["name"]):
+                units.append(u)
+    units = merge_units(units)
+    new_kinds = {k for k, _ in FEDERAL_JOBS}
+    for kind in new_kinds:
+        rank_kind(units, kind)
+
+    meta = json.loads((OUT / "lands.json").read_text())
+    shapes = json.loads((OUT / "land-shapes.json").read_text())["lands"]
+    pairs = [(m, s) for m, s in zip(meta, shapes) if m["kind"] not in new_kinds]
+    for u in units:
+        sh = u.pop("shape")
+        sh["name"] = u["name"]
+        sh["slug"] = u["slug"]
+        pairs.append((u, sh))
+    pairs.sort(key=lambda ms: (ms[0]["kind"], ms[0]["rank"]))
+
+    (OUT / "lands.json").write_text(json.dumps([m for m, _ in pairs], separators=(",", ":")))
+    (OUT / "land-shapes.json").write_text(json.dumps({"lands": [s for _, s in pairs]}, separators=(",", ":")))
+    counts = defaultdict(int)
+    for m, _ in pairs:
+        counts[m["kind"]] += 1
+    print("counts", dict(counts), "total", len(pairs))
+
+
 def main():
     print("loading states")
     state_polys = load_states()
@@ -436,4 +507,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if "--federal" in sys.argv:
+        main_federal()
+    elif "--states" in sys.argv:
+        main_states()
+    else:
+        main()

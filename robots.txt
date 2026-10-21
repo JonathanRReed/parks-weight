@@ -1,4 +1,28 @@
+# Search and AI answer engines may index and cite this site.
+# Model-training crawlers are refused, matching jonathanrreed.com.
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=no
 Allow: /
 
-Sitemap: https://jonathanrreed.github.io/parks-weight/sitemap.xml
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+Sitemap: https://pw.jonathanrreed.com/sitemap.xml
