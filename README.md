@@ -14,7 +14,7 @@ Open `http://localhost:8000`. There is no package install or build step.
 
 ## Files
 
-`index.html` loads `app.v13.js` and `style.v13.css`. Earlier numbered files remain in the repository but are not the page's entry points. The JSON files contain park records, land records, and map outlines; `rebuild_lands.py` maintains land data.
+`index.html` loads `app.js` and `style.css`. The JSON files contain park records, land records, and map outlines; `rebuild_lands.py` maintains land data.
 
 ## Data and limits
 
