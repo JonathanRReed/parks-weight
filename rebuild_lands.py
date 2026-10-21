@@ -2,6 +2,7 @@
 """Build extra true-scale lands for Parks and Scale.
 
 `python3 rebuild_lands.py` rebuilds national forests, state forests, and state parks.
+`python3 rebuild_lands.py --states` writes compact state outlines for the U.S. map.
 `python3 rebuild_lands.py --federal` fetches national monuments and NPS recreation areas,
 seashores, and lakeshores, and merges them into the existing JSON without touching other kinds.
 """
@@ -388,6 +389,17 @@ def rank_kind(units, kind):
         u["shape"]["states"] = u["states"]
 
 
+def main_states():
+    """Write compact state outlines (lon/lat rings) for the U.S. map."""
+    out = []
+    for st, rings in load_states():
+        if len(st) != 2 or st in ("PR", "VI"):
+            continue
+        out.append({"st": st, "rings": [[[round(x, 2), round(y, 2)] for x, y in ring] for ring in rings]})
+    (OUT / "us-states.json").write_text(json.dumps(out, separators=(",", ":")))
+    print("wrote us-states.json", len(out), "states")
+
+
 def main_federal():
     state_polys = load_states()
     units = []
@@ -491,4 +503,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main_federal() if "--federal" in sys.argv else main()
+    if "--federal" in sys.argv:
+        main_federal()
+    elif "--states" in sys.argv:
+        main_states()
+    else:
+        main()
