@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light dark">
   <title>Parks and Scale: the true size of U.S. parks and forests</title>
   <meta name="description" content="Put two U.S. national parks, monuments, forests or state parks side by side at the same scale. Map the places you've been and print them.">
-  <link rel="canonical" href="https://jonathanrreed.github.io/parks-weight/">
+  <link rel="canonical" href="https://pw.jonathanrreed.com/">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="author" content="Jonathan R. Reed">
   <meta name="application-name" content="Parks and Scale">
@@ -16,9 +16,9 @@
   <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Parks and Scale: the true size of U.S. parks and forests">
   <meta property="og:description" content="Put two U.S. national parks, monuments, forests or state parks side by side at the same scale.">
-  <meta property="og:url" content="https://jonathanrreed.github.io/parks-weight/">
-  <meta property="og:image" content="https://jonathanrreed.github.io/parks-weight/og.png">
-  <meta property="og:image:secure_url" content="https://jonathanrreed.github.io/parks-weight/og.png">
+  <meta property="og:url" content="https://pw.jonathanrreed.com/">
+  <meta property="og:image" content="https://pw.jonathanrreed.com/og.png">
+  <meta property="og:image:secure_url" content="https://pw.jonathanrreed.com/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Yellowstone and Arches outlines drawn at the same scale">
@@ -27,7 +27,7 @@
   <meta name="twitter:creator" content="@jrr_misc">
   <meta name="twitter:title" content="Parks and Scale: the true size of U.S. parks and forests">
   <meta name="twitter:description" content="Put two U.S. national parks, monuments, forests or state parks side by side at the same scale.">
-  <meta name="twitter:image" content="https://jonathanrreed.github.io/parks-weight/og.png">
+  <meta name="twitter:image" content="https://pw.jonathanrreed.com/og.png">
   <meta name="twitter:image:alt" content="Yellowstone and Arches outlines drawn at the same scale">
   <link rel="icon" href="favicon.ico" sizes="48x48">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -40,9 +40,9 @@
     "@graph": [
       {
         "@type": "WebApplication",
-        "@id": "https://jonathanrreed.github.io/parks-weight/#app",
+        "@id": "https://pw.jonathanrreed.com/#app",
         "name": "Parks and Scale",
-        "url": "https://jonathanrreed.github.io/parks-weight/",
+        "url": "https://pw.jonathanrreed.com/",
         "description": "Put two U.S. national parks, monuments, forests or state parks side by side at the same scale. Map the places you've been and print them.",
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "Any",
@@ -50,7 +50,7 @@
         "inLanguage": "en-US",
         "isAccessibleForFree": true,
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "image": "https://jonathanrreed.github.io/parks-weight/og.png",
+        "image": "https://pw.jonathanrreed.com/og.png",
         "codeRepository": "https://github.com/JonathanRReed/parks-weight",
         "author": { "@id": "https://jonathanrreed.com/about/#person" }
       },
@@ -72,6 +72,10 @@
   <script>
     (function () {
       var html = document.documentElement, theme, font;
+      if (location.hostname === "jonathanrreed.github.io") {
+        location.replace("https://pw.jonathanrreed.com/" + location.search + location.hash);
+        return;
+      }
       try {
         theme = localStorage.getItem("pas-theme");
         font = localStorage.getItem("pas-font");

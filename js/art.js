@@ -27,7 +27,7 @@ async function embeddedFontCss() {
 const r1 = (n) => Math.round(n * 10) / 10;
 
 function wrap(width, height, body) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img">${body}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="Parks and Scale poster">${body}</svg>`;
 }
 
 async function usaPoster(pal, trail) {

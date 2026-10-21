@@ -31,7 +31,28 @@ Classic and OpenDyslexic drop italics and shrink the display sizes through the `
 
 ## Search and sharing
 
-Metadata lives in the `<head>` of `index.html`: title, description, canonical URL, Open Graph and Twitter tags, and JSON-LD that ties the app to its author on [jonathanrreed.com](https://jonathanrreed.com/). The app is one URL (views use the hash), so `sitemap.xml` lists one page. Bump its `lastmod` when you ship. `robots.txt` allows search and refuses model-training crawlers, matching the personal site. Icons are `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` and `icon-192.png`/`icon-512.png` for `site.webmanifest`. If the canonical URL changes, update it in `index.html`, `robots.txt`, `sitemap.xml` and the JSON-LD.
+Metadata lives in the `<head>` of `index.html`: title, description, canonical URL, Open Graph and Twitter tags, and JSON-LD that ties the app to its author on [jonathanrreed.com](https://jonathanrreed.com/). The app is one URL (views use the hash), so `sitemap.xml` lists one page. Bump its `lastmod` when you ship. `robots.txt` allows search and refuses model-training crawlers, matching the personal site. Icons are `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` and `icon-192.png`/`icon-512.png` for `site.webmanifest`. The canonical address is https://pw.jonathanrreed.com/. If it changes, update it in `index.html`, `robots.txt`, `sitemap.xml` and the JSON-LD. The old GitHub Pages address redirects there from a line in the inline script.
+
+## Deploying
+
+The site is static and runs on Cloudflare Pages (project `parks-and-scale`) at pw.jonathanrreed.com.
+
+```bash
+scripts/deploy.sh   # stages only the served files, then runs wrangler pages deploy
+```
+
+`_headers` sets security headers, a Content Security Policy and font caching. The policy allows the one inline script in `index.html` by its SHA-256 hash, so if you edit that script, recompute the hash and replace it in `_headers`:
+
+```bash
+python3 - <<'PY'
+import re, hashlib, base64
+html = open("index.html").read()
+script = re.findall(r"<script>(.*?)</script>", html, re.S)[0]
+print("sha256-" + base64.b64encode(hashlib.sha256(script.encode()).digest()).decode())
+PY
+```
+
+To test the headers locally, run `npx wrangler pages dev "$(scripts/stage.sh)"`.
 
 ## Rebuilding data
 
