@@ -1,5 +1,5 @@
-import { $, el, esc, fmt } from "./util.js";
-import { getPlace, kindLabel, ordered, places } from "./data.js";
+import { $, el, esc, fmt, areaText } from "./util.js";
+import { getPlace, ordered, placeLine, places } from "./data.js";
 import { loadMapShapes, project } from "./geo.js";
 import { exportFonts, plateFrame, plateSvg, readPalette } from "./plate.js";
 import { getTheme, visited } from "./store.js";
@@ -72,21 +72,16 @@ async function usaPoster(pal, trail) {
     .slice(0, 18)
     .map((p, i) => `<text x="${90 + Math.floor(i / 6) * 420}" y="${1060 + (i % 6) * 26}" style="font:17px ${exportFonts.sans};fill:${pal.ink}">${esc(p.name)}</text>`)
     .join("");
-  const empty = seen.length
-    ? ""
-    : `<text x="${W / 2}" y="${area.y + area.h / 2}" text-anchor="middle" style="font:italic 34px ${exportFonts.serif};fill:${pal["ink-soft"]}">Mark places as visited and they appear here.</text>`;
-
   return wrap(
     W,
     H,
     plateFrame({ width: W, height: H, pal, seed: "usa", m: 22 }) +
       `<text x="90" y="118" style="font:italic 68px ${exportFonts.serif};fill:${pal.ink}">Places I've been</text>` +
-      `<text x="92" y="158" style="font:20px ${exportFonts.sans};fill:${pal["ink-soft"]}">${fmt(seen.length)} visited · ${new Date().getFullYear()}</text>` +
+      `<text x="92" y="158" style="font:20px ${exportFonts.sans};fill:${pal["ink-soft"]}">${seen.length ? `${fmt(seen.length)} visited, ${new Date().getFullYear()}` : "Mark places as visited and they show up here."}</text>` +
       states +
       dots(toGo, false) +
       line +
       dots(seen, true) +
-      empty +
       names +
       `<circle cx="1330" cy="1075" r="8" style="fill:${pal["k-national_park"]};stroke:${pal.ink};stroke-width:1.5"/><text x="1348" y="1081" style="font:17px ${exportFonts.sans};fill:${pal.ink}">Visited</text>` +
       `<circle cx="1330" cy="1107" r="6" style="fill:none;stroke:${pal["ink-soft"]};stroke-width:1.2"/><text x="1348" y="1113" style="font:17px ${exportFonts.sans};fill:${pal.ink}">National park still to visit</text>`,
@@ -99,7 +94,7 @@ function placePoster(place, pal) {
   const plate = plateSvg({
     big: place,
     width: 940,
-    height: 760,
+    height: 900,
     pal,
     fonts: exportFonts,
     labels: false,
@@ -111,11 +106,11 @@ function placePoster(place, pal) {
     H,
     plateFrame({ width: W, height: H, pal, seed: place.id, m: 22 }) +
       `<text x="80" y="150" style="font:italic 74px ${exportFonts.serif};fill:${pal.ink}">${esc(place.name)}</text>` +
-      `<text x="82" y="196" style="font:22px ${exportFonts.sans};fill:${pal["ink-soft"]}">${esc([kindLabel(place.kind), place.states.join(", ")].filter(Boolean).join(" · "))}</text>` +
+      `<text x="82" y="196" style="font:22px ${exportFonts.sans};fill:${pal["ink-soft"]}">${esc(placeLine(place))}</text>` +
       `<g transform="translate(80 250)">${plate}</g>` +
-      `<text x="80" y="1110" style="font:italic 46px ${exportFonts.serif};fill:${pal.ink}">${fmt(place.acres)} acres</text>` +
-      `<text x="82" y="1152" style="font:20px ${exportFonts.sans};fill:${pal["ink-soft"]}">${fmt(place.km2, place.km2 < 10 ? 1 : 0)} km² · same scale as every Parks and Scale plate</text>` +
-      (been ? `<text x="82" y="1230" style="font:italic 34px ${exportFonts.serif};fill:${pal.accent}">Been here</text>` : ""),
+      `<text x="80" y="1250" style="font:italic 46px ${exportFonts.serif};fill:${pal.ink}">${areaText(place.acres)} acres</text>` +
+      `<text x="82" y="1292" style="font:20px ${exportFonts.sans};fill:${pal["ink-soft"]}">${areaText(place.km2)} km². Same scale as every Parks and Scale plate.</text>` +
+      (been ? `<text x="82" y="1345" style="font:italic 34px ${exportFonts.serif};fill:${pal.accent}">Been here</text>` : ""),
   );
 }
 
@@ -124,7 +119,7 @@ function pairPoster(pair, pal) {
   const W = 1100;
   const H = 1400;
   const ratio = big.acres / small.acres;
-  const plate = plateSvg({ big, small, width: 940, height: 760, pal, fonts: exportFonts });
+  const plate = plateSvg({ big, small, width: 940, height: 900, pal, fonts: exportFonts });
   return wrap(
     W,
     H,
@@ -132,8 +127,8 @@ function pairPoster(pair, pal) {
       `<text x="80" y="150" style="font:italic 70px ${exportFonts.serif};fill:${pal.ink}">${esc(big.name)}</text>` +
       `<text x="82" y="204" style="font:italic 36px ${exportFonts.serif};fill:${pal["ink-soft"]}">and ${esc(small.name)}</text>` +
       `<g transform="translate(80 250)">${plate}</g>` +
-      `<text x="80" y="1130" style="font:italic 74px ${exportFonts.serif};fill:${pal.ink}">${ratio >= 10 ? fmt(Math.round(ratio)) : fmt(ratio, 1)}×</text>` +
-      `<text x="82" y="1176" style="font:22px ${exportFonts.sans};fill:${pal["ink-soft"]}">${esc(big.name)} is ${ratio >= 10 ? fmt(Math.round(ratio)) : fmt(ratio, 1)} times the size of ${esc(small.name)}.</text>`,
+      `<text x="80" y="1260" style="font:italic 74px ${exportFonts.serif};fill:${pal.ink}">${ratio >= 10 ? fmt(Math.round(ratio)) : fmt(ratio, 1)}×</text>` +
+      `<text x="82" y="1306" style="font:22px ${exportFonts.sans};fill:${pal["ink-soft"]}">${esc(big.name)} is ${ratio >= 10 ? fmt(Math.round(ratio)) : fmt(ratio, 1)} times the size of ${esc(small.name)}.</text>`,
   );
 }
 

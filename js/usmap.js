@@ -1,10 +1,10 @@
-import { $, el, fmt, icon } from "./util.js";
+import { $, el, fmt, icon, areaText } from "./util.js";
 import { KINDS, allStates, placeLine, places } from "./data.js";
 import { KM_PER_UNIT, loadMapShapes, project } from "./geo.js";
 import { onChange, visited } from "./store.js";
 
 const CELL = 38;
-const MAX_ZOOM = 60;
+const MAX_ZOOM = 24;
 const NICE_MILES = [10, 25, 50, 100, 200, 500, 1000];
 const SVG = "http://www.w3.org/2000/svg";
 
@@ -107,7 +107,7 @@ export function initMap(ctx) {
     return [...cells.values()];
   }
 
-  function markerNode(item, k, tabbable) {
+  function markerNode(item, k, tabbable, labeled) {
     const { p, x, y } = item;
     const r = (p.kind === "national_park" ? 8 : 6) * k;
     const been = visited.has(p.id);
@@ -122,7 +122,7 @@ export function initMap(ctx) {
     }
     const dot = document.createElementNS(SVG, "circle");
     dot.setAttribute("r", r.toFixed(3));
-    dot.setAttribute("style", been ? `fill:var(--k-${p.kind});stroke:var(--ink);stroke-width:1.4` : `fill:var(--paper);stroke:var(--k-${p.kind});stroke-width:2`);
+    dot.setAttribute("style", been ? `fill:var(--k-${p.kind});stroke:var(--ink);stroke-width:1.4;vector-effect:non-scaling-stroke` : `fill:var(--paper);stroke:var(--k-${p.kind});stroke-width:2;vector-effect:non-scaling-stroke`);
     g.append(dot);
     if (been) {
       const tick = document.createElementNS(SVG, "path");
@@ -130,10 +130,18 @@ export function initMap(ctx) {
       tick.setAttribute("style", "fill:none;stroke:var(--paper);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke");
       g.append(tick);
     }
+    if (labeled) {
+      const text = document.createElementNS(SVG, "text");
+      text.textContent = p.name;
+      text.setAttribute("x", (r + 5 * k).toFixed(3));
+      text.setAttribute("dominant-baseline", "central");
+      text.setAttribute("style", `font:600 ${(13 * k).toFixed(3)}px var(--sans);fill:var(--ink);paint-order:stroke;stroke:var(--paper);stroke-width:${(4 * k).toFixed(3)}px;stroke-linejoin:round;pointer-events:none`);
+      g.append(text);
+    }
     if (selected === p.id) {
       const ring = document.createElementNS(SVG, "circle");
       ring.setAttribute("r", (r + 5 * k).toFixed(3));
-      ring.setAttribute("style", "fill:none;stroke:var(--accent);stroke-width:2");
+      ring.setAttribute("style", "fill:none;stroke:var(--accent);stroke-width:2;vector-effect:non-scaling-stroke");
       g.append(ring);
     }
     return g;
@@ -154,7 +162,7 @@ export function initMap(ctx) {
     g.setAttribute("aria-label", `${count} places${seen ? `, ${seen} visited` : ""}. Zoom in.`);
     const disc = document.createElementNS(SVG, "circle");
     disc.setAttribute("r", r.toFixed(3));
-    disc.setAttribute("style", "fill:var(--paper);stroke:var(--ink);stroke-width:1.4");
+    disc.setAttribute("style", "fill:var(--paper);stroke:var(--ink);stroke-width:1.4;vector-effect:non-scaling-stroke");
     const text = document.createElementNS(SVG, "text");
     text.textContent = count > 999 ? `${Math.round(count / 100) / 10}k` : String(count);
     text.setAttribute("text-anchor", "middle");
@@ -166,7 +174,7 @@ export function initMap(ctx) {
       badge.setAttribute("cx", (r * 0.78).toFixed(3));
       badge.setAttribute("cy", (-r * 0.78).toFixed(3));
       badge.setAttribute("r", (5 * k).toFixed(3));
-      badge.setAttribute("style", "fill:var(--accent);stroke:var(--paper);stroke-width:1.2");
+      badge.setAttribute("style", "fill:var(--accent);stroke:var(--paper);stroke-width:1.2;vector-effect:non-scaling-stroke");
       g.append(badge);
     }
     return g;
@@ -199,8 +207,10 @@ export function initMap(ctx) {
     const groups = cluster(visible, b);
     const nodes = [];
     const tabbable = groups.length <= 150;
+    const singles = groups.filter((items) => items.length === 1).length;
+    const labeled = full.w / view.w >= 2.5 && singles <= 40;
     for (const items of groups) {
-      nodes.push(items.length === 1 ? markerNode(items[0], b.k, tabbable) : clusterNode(items, b.k));
+      nodes.push(items.length === 1 ? markerNode(items[0], b.k, tabbable, labeled) : clusterNode(items, b.k));
     }
     markGroup.replaceChildren(...nodes);
 
@@ -231,7 +241,8 @@ export function initMap(ctx) {
     popover.hidden = false;
     popover.replaceChildren(
       el("b", {}, p.name),
-      el("span", {}, `${placeLine(p)} · ${fmt(p.acres)} acres`),
+      el("span", {}, placeLine(p)),
+      el("span", {}, `${areaText(p.acres)} acres`),
       el("button", { type: "button", class: "text-btn", onclick: () => ctx.openPlace(p) }, "Open place"),
     );
     const { w, h } = size();
@@ -249,7 +260,7 @@ export function initMap(ctx) {
     const parts = [`${fmt(shown.length)} ${shown.length === 1 ? "place" : "places"} shown`, `${fmt(seen)} visited`];
     if (away) parts.push(`${fmt(away)} outside the map`);
     if (!mapState.kinds.size) parts.splice(0, 2, "Pick a type to see places");
-    status.textContent = parts.join(" · ");
+    status.textContent = `${parts.join(". ")}.`;
   }
 
   function buildTools() {

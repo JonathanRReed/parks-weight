@@ -33,6 +33,6 @@ The plain run replaces `lands.json`, so run `--federal` after it. The script wri
 
 ## Data and limits
 
-National park acreage and visitor counts use 2023 NPS figures. Monument and recreation area outlines come from the NPS. Forest and state-park outlines use USFS administrative boundaries and USGS PAD-US. Small islands are omitted from rendered outlines. A few remote marine monuments have no state and no map position. Use the maps for comparison, not precise boundary work.
+National park acreage and visitor counts use 2023 NPS figures. Monument and recreation area outlines come from the NPS. Forest and state-park outlines use USFS administrative boundaries and USGS PAD-US. Small islands are omitted from rendered outlines. Marine national monuments and Buck Island Reef are left out, because PAD-US reports only their land area and the sizes would mislead. `og.png` is the social preview image. Use the maps for comparison, not precise boundary work.
 
 Visited and saved places stay on the current device. This is not an official NPS, USFS, or USGS site.

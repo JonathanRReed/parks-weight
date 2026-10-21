@@ -29,7 +29,7 @@
   --paper: #f1e9d6;
   --paper-2: #e6d9bb;
   --ink: #2a281f;
-  --ink-soft: #675f4b;
+  --ink-soft: #5e5742;
   --big: #d9c28f;
   --small: #2b6a52;
   --accent: #a8412a;
@@ -37,8 +37,8 @@
   --k-national_park: #2b6a52;
   --k-national_monument: #9a5b2e;
   --k-national_recreation: #2b6f8a;
-  --k-national_forest: #6b8f2f;
-  --k-state_forest: #b0922a;
+  --k-national_forest: #5f8429;
+  --k-state_forest: #92770f;
   --k-state_park: #7a4d86;
 }
 [data-theme="dark"] {
@@ -459,6 +459,11 @@ main {
   font: italic 400 20px/1.3 var(--serif);
   margin-top: 4px;
 }
+.caption-stat span {
+  margin-left: 10px;
+  font: 400 14px var(--sans);
+  color: var(--ink-soft);
+}
 .caption-body {
   min-width: 0;
 }
@@ -495,6 +500,11 @@ main {
   transform: rotate(-2deg);
 }
 
+.side-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .fit {
   display: grid;
   gap: 10px;
@@ -643,6 +653,15 @@ main {
 }
 .mark {
   cursor: pointer;
+}
+.mark > circle:first-child {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@media (hover: hover) {
+  .mark:hover > circle:first-child {
+    transform: scale(1.25);
+  }
 }
 .mark:focus-visible {
   outline: 2px solid var(--accent);
@@ -1013,6 +1032,20 @@ dialog::backdrop {
   }
 }
 
+@media (pointer: coarse) {
+  .chip,
+  .stamp {
+    min-height: 42px;
+  }
+  .mini {
+    width: 42px;
+    height: 42px;
+  }
+  .text-btn {
+    padding: 10px 4px;
+  }
+}
+
 /* Motion */
 @media (prefers-reduced-motion: no-preference) {
   .plate.enter path[data-role="big"] {
@@ -1084,6 +1117,9 @@ dialog::backdrop {
   }
   body.printing-art > :not(#printHost) {
     display: none !important;
+  }
+  html:has(body.printing-art) {
+    background: #fff;
   }
   body.printing-art {
     display: block;

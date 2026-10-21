@@ -400,6 +400,10 @@ def main_states():
     print("wrote us-states.json", len(out), "states")
 
 
+# PAD-US reports only the land part of these units, so their acreage would mislead a size comparison.
+MARINE = re.compile(r"marine national monument|buck island reef", re.I)
+
+
 def main_federal():
     state_polys = load_states()
     units = []
@@ -409,7 +413,7 @@ def main_federal():
         for feat in feats:
             a = feat.get("attributes") or {}
             u = feature_to_unit(feat, kind, a.get("Unit_Nm"), a.get("GIS_AcrsDb"), state_polys)
-            if u:
+            if u and not MARINE.search(u["name"]):
                 units.append(u)
     units = merge_units(units)
     new_kinds = {k for k, _ in FEDERAL_JOBS}

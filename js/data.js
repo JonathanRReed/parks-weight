@@ -100,4 +100,6 @@ export function allStates(kind) {
   return [...set].sort();
 }
 
-export const placeLine = (p) => [kindLabel(p.kind), p.states.join(", ")].filter(Boolean).join(" · ");
+const listFormat = new Intl.ListFormat("en", { style: "long", type: "conjunction" });
+export const stateList = (states) => listFormat.format(states);
+export const placeLine = (p) => (p.states.length ? `${kindLabel(p.kind)} in ${stateList(p.states)}` : kindLabel(p.kind));

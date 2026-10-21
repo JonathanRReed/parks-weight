@@ -9,6 +9,8 @@ export function fmt(n, digits = 0) {
   return numberFormat.get(digits).format(n);
 }
 
+export const areaText = (n) => (n > 0 && n < 0.01 ? "under 0.01" : fmt(n, n < 1 ? 2 : n < 10 ? 1 : 0));
+
 export function compact(n) {
   if (n >= 1e6) return `${fmt(n / 1e6, n >= 1e7 ? 0 : 1)}M`;
   if (n >= 1e4) return `${fmt(n / 1e3, 0)}k`;

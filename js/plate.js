@@ -190,7 +190,11 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
     if (!labels || room < 2 * r + 8 + textWidth + 30) {
       const cx = side === "left" ? Math.max(px - r - 8, m + r + 8) : Math.min(px + r + 8, width - m - r - 8);
       const link = `<line x1="${n1(px)}" y1="${n1(rawY)}" x2="${n1(cx)}" y2="${n1(py)}" style="stroke:${ink};stroke-width:1"/>`;
-      return link + dot + badge(cx, py);
+      const inward = side === "left" ? 1 : -1;
+      const haloed = labels
+        ? `<text x="${n1(cx + inward * (r + 7))}" y="${n1(py)}" text-anchor="${side === "left" ? "start" : "end"}" dominant-baseline="central" style="font:italic 19px ${serif};fill:${ink};paint-order:stroke;stroke:${pal.paper};stroke-width:5px;stroke-linejoin:round">${esc(name)}</text>`
+        : "";
+      return link + dot + badge(cx, py) + haloed;
     }
     const dir = side === "left" ? 1 : -1;
     const startX = side === "left" ? edge : width - edge;

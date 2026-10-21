@@ -1,13 +1,13 @@
-import { $, el, fmt, icon } from "./util.js";
+import { $, el, fmt, icon, areaText } from "./util.js";
 import { getPlace, kindPlural, kindTotal, placeLine, sizeNeighbors } from "./data.js";
 import { liveFonts, livePalette, plateSvg } from "./plate.js";
 import { onChange, saved, toggleSaved, toggleVisited, visited } from "./store.js";
 
 function facts(place) {
   const rows = [
-    ["Acres", fmt(place.acres)],
-    ["Square miles", fmt(place.acres / 640, place.acres < 6400 ? 1 : 0)],
-    ["Square km", fmt(place.km2, place.km2 < 10 ? 1 : 0)],
+    ["Acres", areaText(place.acres)],
+    ["Square miles", areaText(place.acres / 640)],
+    ["Square km", areaText(place.km2)],
   ];
   if (place.states.length) rows.push(["Where", place.states.join(", ")]);
   if (place.visitors) rows.push(["Visitors in 2023", fmt(place.visitors)]);
@@ -19,8 +19,8 @@ function notes(place) {
   const lines = [];
   if (place.rank) lines.push(`#${fmt(place.rank)} of ${fmt(kindTotal(place.kind))} ${kindPlural(place.kind).toLowerCase()} by size`);
   const { smaller, larger } = sizeNeighbors(place);
-  if (larger) lines.push(`Next larger: ${larger.name}, ${fmt(larger.acres)} acres`);
-  if (smaller) lines.push(`Next smaller: ${smaller.name}, ${fmt(smaller.acres)} acres`);
+  if (larger) lines.push(`Next larger: ${larger.name}, ${areaText(larger.acres)} acres`);
+  if (smaller) lines.push(`Next smaller: ${smaller.name}, ${areaText(smaller.acres)} acres`);
   const yellowstone = getPlace("yellowstone");
   if (yellowstone && yellowstone !== place) {
     const r = yellowstone.acres / place.acres;

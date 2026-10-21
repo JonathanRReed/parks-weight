@@ -1,4 +1,4 @@
-import { $, debounce, el, fmt, icon } from "./util.js";
+import { $, debounce, el, fmt, icon, areaText } from "./util.js";
 import { KINDS, allStates, kindTotal, landsLoaded, placeLine, places } from "./data.js";
 import { thumb } from "./plate.js";
 import { onChange, saved, toggleSaved, toggleVisited, visited } from "./store.js";
@@ -133,7 +133,7 @@ export function initGuide(ctx) {
         el("span", { class: "card-plate" }, thumb(p)),
         el("span", { class: "card-name" }, p.name),
         el("span", { class: "card-meta" }, placeLine(p)),
-        el("span", { class: "card-acres" }, `${fmt(p.acres)} acres`),
+        el("span", { class: "card-acres" }, `${areaText(p.acres)} acres`),
       ),
       el(
         "div",

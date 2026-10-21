@@ -12,6 +12,11 @@
   <meta property="og:title" content="Parks and Scale">
   <meta property="og:description" content="The true size of U.S. parks and forests, side by side at the same scale.">
   <meta property="og:url" content="https://jonathanrreed.github.io/parks-weight/">
+  <meta property="og:image" content="https://jonathanrreed.github.io/parks-weight/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Yellowstone and Arches outlines drawn at the same scale">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232b6a52'/%3E%3Cpath d='M6 22l6-10 5 7 3-4 6 7z' fill='%23f1e9d6'/%3E%3C/svg%3E">
   <link rel="preload" href="fonts/instrument-serif-italic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/hanken-grotesk-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -42,6 +47,7 @@
     <symbol id="i-download" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></symbol>
     <symbol id="i-shuffle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7h3.5c4 0 5 10 9 10H20M4 17h3.5c1.4 0 2.4-1.2 3.3-2.7M13.2 9.3C14 8 15 7 16.5 7H20M17.5 4.5L20 7l-2.5 2.5M17.5 14.5L20 17l-2.5 2.5"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3A4 4 0 0011 18.700l1-1"/></symbol>
     <symbol id="i-theme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="currentColor" d="M12 4a8 8 0 010 16z"/></symbol>
   </svg>
 
@@ -74,7 +80,10 @@
         <div class="side">
           <div id="captions" class="captions"></div>
           <div id="fit" class="fit"></div>
-          <button type="button" class="btn" id="shuffle"><svg class="icon" aria-hidden="true"><use href="#i-shuffle"/></svg>Surprise me</button>
+          <div class="side-actions">
+            <button type="button" class="btn" id="shuffle"><svg class="icon" aria-hidden="true"><use href="#i-shuffle"/></svg>Surprise me</button>
+            <button type="button" class="btn" id="share"><svg class="icon" aria-hidden="true"><use href="#i-link"/></svg><span id="shareLabel">Share</span></button>
+          </div>
         </div>
       </div>
     </section>

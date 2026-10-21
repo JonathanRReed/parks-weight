@@ -11,8 +11,8 @@ import { initArt } from "./art.js";
 const VIEWS = ["compare", "map", "guide"];
 const TITLES = {
   compare: "Parks and Scale: the true size of U.S. parks and forests",
-  map: "US map · Parks and Scale",
-  guide: "Field guide · Parks and Scale",
+  map: "US map: Parks and Scale",
+  guide: "Field guide: Parks and Scale",
 };
 const DEFAULT_PAIR = ["yellowstone", "arches"];
 
@@ -46,7 +46,8 @@ function syncChrome() {
     else link.removeAttribute("aria-current");
     link.href = hashFor(link.dataset.view);
   });
-  document.title = TITLES[view];
+  const current = view === "compare" ? getPair() : null;
+  document.title = current ? `${ordered(...current).map((p) => p.name).join(" and ")}: Parks and Scale` : TITLES[view];
 }
 
 function writeHash() {
@@ -179,11 +180,12 @@ async function boot() {
       })
       .finally(() => {
         resolveLands();
-        if (!getPair()) {
-          const target = parseHash();
-          if (getPlace(target.a) && getPlace(target.b)) pair = [getPlace(target.a).id, getPlace(target.b).id];
+        const target = parseHash();
+        if (getPlace(target.a) && getPlace(target.b) && getPlace(target.a) !== getPlace(target.b)) {
+          pair = [getPlace(target.a).id, getPlace(target.b).id];
         }
         if (view === "compare") compare.draw();
+        syncChrome();
       });
   }, 0);
 }

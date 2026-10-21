@@ -1,4 +1,4 @@
-import { $, el, fmt } from "./util.js";
+import { $, el, fmt, areaText } from "./util.js";
 import { KINDS, landsLoaded, placeLine, places } from "./data.js";
 import { thumb } from "./plate.js";
 
@@ -64,7 +64,7 @@ export function initChooser(ctx) {
           "button",
           { type: "button", class: "row", onclick: () => pick(p) },
           el("span", { class: "row-thumb" }, thumb(p)),
-          el("span", { class: "row-text" }, el("b", {}, p.name), el("small", {}, `${placeLine(p)} · ${fmt(p.acres)} acres`)),
+          el("span", { class: "row-text" }, el("b", {}, p.name), el("small", {}, placeLine(p)), el("small", {}, `${areaText(p.acres)} acres`)),
         ),
       ),
     );
