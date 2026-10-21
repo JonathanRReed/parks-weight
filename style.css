@@ -242,6 +242,35 @@ main {
   color: var(--ink-soft);
   font-size: 13px;
 }
+.foot p {
+  margin: 0;
+}
+.foot-credit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-top: 12px;
+}
+.foot-credit a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 3px;
+}
+.foot-credit a:hover {
+  text-decoration-color: currentColor;
+}
+.foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+.foot-links a {
+  display: inline-block;
+  padding: 6px 0;
+}
 
 /* Buttons */
 .btn,

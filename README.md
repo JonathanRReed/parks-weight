@@ -19,6 +19,10 @@ Open `http://localhost:8000`. There is no package install or build step.
 - `fonts/` holds the self-hosted Instrument Serif and Hanken Grotesk files. Nothing loads from a third-party host.
 - `parks.json` and `shapes.json` hold the 63 national parks. `lands.json` and `land-shapes.json` hold monuments, recreation areas, national forests, state forests and state parks, and load after first paint. `us-states.json` holds state outlines for the map.
 
+## Search and sharing
+
+Metadata lives in the `<head>` of `index.html`: title, description, canonical URL, Open Graph and Twitter tags, and JSON-LD that ties the app to its author on [jonathanrreed.com](https://jonathanrreed.com/). The app is one URL (views use the hash), so `sitemap.xml` lists one page. Bump its `lastmod` when you ship. `robots.txt` allows search and refuses model-training crawlers, matching the personal site. Icons are `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` and `icon-192.png`/`icon-512.png` for `site.webmanifest`. If the canonical URL changes, update it in `index.html`, `robots.txt`, `sitemap.xml` and the JSON-LD.
+
 ## Rebuilding data
 
 `rebuild_lands.py` regenerates the land files from public boundary services.
