@@ -20,6 +20,21 @@
   src: url("fonts/hanken-grotesk-normal.woff2") format("woff2");
 }
 
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/OpenDyslexic-400-normal-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/OpenDyslexic-700-normal-latin.woff2") format("woff2");
+}
+
 /* Sandstone (light) is the default; forest (dark) overrides it.
    plate.js and art.js read these names, so keep them in sync with PALETTE_KEYS. */
 :root,
@@ -63,12 +78,37 @@
 :root {
   --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
   --sans: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ital: italic;
+  --ds: 1;
+  --body: 16px;
   --rule: color-mix(in srgb, var(--ink) 22%, transparent);
   --rule-soft: color-mix(in srgb, var(--ink) 12%, transparent);
   --print: color-mix(in srgb, var(--ink) 20%, transparent);
   --radius: 6px;
   --gutter: clamp(14px, 4vw, 32px);
   --max: 1180px;
+}
+
+/* Visitor typeface. The default pairing is Instrument Serif with Hanken Grotesk.
+   System is a conventional reading stack. OpenDyslexic loads only when chosen.
+   Both swap out italics, which are harder to read, and rescale the display sizes,
+   because Instrument Serif is far narrower than either. */
+:root[data-font="classic"] {
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --ital: normal;
+  --ds: 0.84;
+}
+:root[data-font="dyslexic"] .tabs a {
+  padding-inline: 9px;
+  font-size: 13px;
+}
+:root[data-font="dyslexic"] {
+  --serif: "OpenDyslexic", "Hanken Grotesk", system-ui, sans-serif;
+  --sans: "OpenDyslexic", "Hanken Grotesk", system-ui, sans-serif;
+  --ital: normal;
+  --ds: 0.62;
+  --body: 14px;
 }
 
 *,
@@ -85,7 +125,7 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  font: 400 16px/1.5 var(--sans);
+  font: 400 var(--body)/1.5 var(--sans);
   color: var(--ink);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
@@ -130,6 +170,24 @@ svg {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 10;
+  padding: 10px 14px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 600;
+}
+.skip:focus {
+  top: 12px;
+}
+main:focus {
+  outline: none;
+}
 .sprites {
   position: absolute;
   pointer-events: none;
@@ -161,7 +219,7 @@ html:not(.ready) .view {
   gap: 10px;
   color: inherit;
   text-decoration: none;
-  font: italic 400 26px/1 var(--serif);
+  font: var(--ital) 400 calc(26px * var(--ds))/1 var(--serif);
   margin-right: auto;
 }
 .brand-mark {
@@ -183,6 +241,7 @@ html:not(.ready) .view {
   border-bottom: 1px solid var(--rule);
 }
 .tabs a {
+  white-space: nowrap;
   padding: 8px 14px;
   margin-bottom: -1px;
   color: var(--ink-soft);
@@ -318,6 +377,117 @@ main {
   border-color: var(--rule);
   background: var(--paper);
 }
+.aa {
+  font: 600 15px/1 var(--sans);
+  letter-spacing: -0.02em;
+}
+.icon-btn[aria-expanded="true"],
+.icon-btn:has(+ .prefs:popover-open) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+/* Display settings */
+.prefs {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: min(330px, calc(100vw - 2 * var(--gutter)));
+  padding: 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--print);
+}
+.prefs::backdrop {
+  background: transparent;
+}
+.prefs-group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.prefs-group + .prefs-group {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule-soft);
+}
+.prefs-group legend {
+  padding: 0;
+  margin-bottom: 8px;
+  color: var(--ink-soft);
+  font: 600 12px/1 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.prefs-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.prefs-options--stack {
+  grid-template-columns: 1fr;
+}
+.prefs-options--stack .prefs-option span {
+  justify-content: flex-start;
+  padding: 4px 14px;
+  min-height: 42px;
+}
+.prefs-option {
+  position: relative;
+}
+.prefs-option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.prefs-option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 4px 6px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.prefs-option:hover span {
+  background: var(--paper-2);
+}
+.prefs-option input:checked + span {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+.prefs-option input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.prefs-option--field span {
+  font: 400 22px/1 "Instrument Serif", Georgia, serif;
+}
+.prefs-option--classic span {
+  font: 400 16px/1.1 "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, serif;
+}
+.prefs-option--dyslexic span {
+  font: 400 13px/1.2 "OpenDyslexic", system-ui, sans-serif;
+}
+.prefs-note {
+  margin-top: 14px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -372,7 +542,7 @@ main {
   gap: 14px;
   margin: 4px 0 12px;
   color: var(--ink-soft);
-  font: italic 400 19px/1.3 var(--serif);
+  font: var(--ital) 400 calc(19px * var(--ds))/1.3 var(--serif);
 }
 .hint .text-btn {
   font: 600 14px var(--sans);
@@ -460,10 +630,10 @@ main {
   border: 1px solid var(--ink);
   border-radius: 50%;
   background: var(--paper);
-  font: italic 400 16px/1 var(--serif);
+  font: var(--ital) 400 calc(16px * var(--ds))/1 var(--serif);
 }
 .caption h2 {
-  font: 400 30px/1.05 var(--serif);
+  font: 400 calc(30px * var(--ds))/1.05 var(--serif);
   text-wrap: balance;
 }
 .name-btn {
@@ -485,7 +655,7 @@ main {
   font-size: 14px;
 }
 .caption-stat {
-  font: italic 400 20px/1.3 var(--serif);
+  font: var(--ital) 400 calc(20px * var(--ds))/1.3 var(--serif);
   margin-top: 4px;
 }
 .caption-stat span {
@@ -539,7 +709,7 @@ main {
   gap: 10px;
 }
 .fit-ratio strong {
-  font: italic 400 48px/1 var(--serif);
+  font: var(--ital) 400 calc(48px * var(--ds))/1 var(--serif);
 }
 .waffle {
   display: flex;
@@ -564,18 +734,19 @@ main {
   color: var(--ink-soft);
 }
 .fit-unit {
-  font-style: italic;
+  font-style: var(--ital);
 }
 .fit-note {
   margin: 10px 0 0;
   font-size: 13px;
-  font-style: italic;
+  font-style: var(--ital);
   color: var(--ink-soft);
 }
 
 /* Toolbars shared by map and guide */
 .tools {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   margin-bottom: 14px;
 }
@@ -744,7 +915,7 @@ main {
   translate: -50% -100%;
 }
 .map-popover b {
-  font: 400 21px/1.15 var(--serif);
+  font: 400 calc(21px * var(--ds))/1.15 var(--serif);
 }
 .map-popover span {
   color: var(--ink-soft);
@@ -773,7 +944,7 @@ main {
   color: var(--ink-soft);
 }
 .stat-count {
-  font: italic 400 22px/1.2 var(--serif);
+  font: var(--ital) 400 calc(22px * var(--ds))/1.2 var(--serif);
 }
 .meter {
   height: 5px;
@@ -828,7 +999,7 @@ main {
   vector-effect: non-scaling-stroke;
 }
 .card-name {
-  font: 400 21px/1.1 var(--serif);
+  font: 400 calc(21px * var(--ds))/1.1 var(--serif);
   text-wrap: balance;
 }
 .card-meta {
@@ -864,7 +1035,7 @@ main {
   grid-column: 1 / -1;
   padding: 36px 0;
   color: var(--ink-soft);
-  font: italic 400 22px/1.3 var(--serif);
+  font: var(--ital) 400 calc(22px * var(--ds))/1.3 var(--serif);
 }
 
 /* Dialogs */
@@ -901,7 +1072,7 @@ dialog::backdrop {
   padding: 14px 16px 10px 20px;
 }
 .sheet-head h2 {
-  font: 400 28px/1.1 var(--serif);
+  font: 400 calc(28px * var(--ds))/1.1 var(--serif);
 }
 #chooser > :not(.sheet-head, .rows) {
   flex: none;
@@ -984,7 +1155,7 @@ dialog::backdrop {
   padding-right: 4px;
 }
 .place-head h2 {
-  font: 400 36px/1.05 var(--serif);
+  font: 400 calc(36px * var(--ds))/1.05 var(--serif);
   text-wrap: balance;
 }
 .place-kind {
@@ -1017,7 +1188,7 @@ dialog::backdrop {
   display: grid;
   gap: 4px;
   color: var(--ink-soft);
-  font: italic 400 19px/1.3 var(--serif);
+  font: var(--ital) 400 calc(19px * var(--ds))/1.3 var(--serif);
 }
 .actions {
   display: flex;

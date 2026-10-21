@@ -1,5 +1,5 @@
 import { $, el, fmt, icon, areaText } from "./util.js";
-import { KINDS, allStates, placeLine, places } from "./data.js";
+import { KINDS, allStates, placeLine, places, stateList } from "./data.js";
 import { KM_PER_UNIT, loadMapShapes, project } from "./geo.js";
 import { onChange, visited } from "./store.js";
 
@@ -258,7 +258,10 @@ export function initMap(ctx) {
     const away = list.length - shown.length;
     const seen = shown.filter((p) => visited.has(p.id)).length;
     const parts = [`${fmt(shown.length)} ${shown.length === 1 ? "place" : "places"} shown`, `${fmt(seen)} visited`];
-    if (away) parts.push(`${fmt(away)} outside the map`);
+    if (away) {
+      const names = list.filter((p) => !onMap.has(p.id)).map((p) => p.name);
+      parts.push(away <= 2 ? `${stateList(names)} ${away === 1 ? "is" : "are"} too far away to show` : `${fmt(away)} are too far away to show`);
+    }
     if (!mapState.kinds.size) parts.splice(0, 2, "Pick a type to see places");
     status.textContent = `${parts.join(". ")}.`;
   }

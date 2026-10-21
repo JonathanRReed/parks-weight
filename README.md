@@ -14,10 +14,20 @@ Open `http://localhost:8000`. There is no package install or build step.
 
 ## Files
 
-- `index.html` and `style.css` hold the markup and all styling. Sandstone (light) and forest (dark) are two token sets at the top of `style.css`.
+- `index.html` and `style.css` hold the markup and all styling. Sandstone (light) and forest (dark) are two token sets at the top of `style.css`. `js/prefs.js` drives the Aa menu.
 - `js/` is plain ES modules. `main.js` boots the app and routes by URL hash. `data.js` loads and indexes places. `plate.js` draws the comparison plate and is shared by the compare view, place sheet and print art. `usmap.js` is the clustered US map, `guide.js` the field guide, `art.js` the posters.
-- `fonts/` holds the self-hosted Instrument Serif and Hanken Grotesk files. Nothing loads from a third-party host.
+- `fonts/` holds the self-hosted Instrument Serif, Hanken Grotesk and OpenDyslexic files (OpenDyslexic's license sits beside it). Nothing loads from a third-party host.
 - `parks.json` and `shapes.json` hold the 63 national parks. `lands.json` and `land-shapes.json` hold monuments, recreation areas, national forests, state forests and state parks, and load after first paint. `us-states.json` holds state outlines for the map.
+
+## Display settings
+
+The Aa button opens a menu for theme (system, sandstone, forest) and typeface. Both are saved on the device and applied by a small script in `<head>` before first paint, so there is no flash.
+
+- **Field guide** is the default pairing, Instrument Serif with Hanken Grotesk.
+- **Classic** is a conventional reading stack: a system book serif for names and system sans for text.
+- **OpenDyslexic** loads only when chosen.
+
+Classic and OpenDyslexic drop italics and shrink the display sizes through the `--ital` and `--ds` tokens, because Instrument Serif is far narrower than either. Posters and downloads keep the Field guide fonts whatever is chosen.
 
 ## Search and sharing
 

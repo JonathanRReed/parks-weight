@@ -38,21 +38,52 @@ function flip(set, key, id) {
 export const toggleVisited = (id) => flip(visited, VISITED_KEY, id);
 export const toggleSaved = (id) => flip(saved, SAVED_KEY, id);
 
-export function getTheme() {
-  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+const FONT_KEY = "pas-font";
+export const THEMES = ["system", "light", "dark"];
+export const FONTS = ["field", "classic", "dyslexic"];
+
+const html = document.documentElement;
+const dark = matchMedia("(prefers-color-scheme: dark)");
+
+export const getTheme = () => (html.dataset.theme === "dark" ? "dark" : "light");
+export const getThemePref = () => (THEMES.includes(html.dataset.themePref) ? html.dataset.themePref : "system");
+export const getFont = () => (FONTS.includes(html.dataset.font) ? html.dataset.font : "field");
+
+function save(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // The choice still applies for this visit.
+  }
 }
 
-export function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  try {
-    localStorage.setItem(THEME_KEY, theme);
-  } catch {
-    // Theme still applies for this visit.
-  }
-  const color = getComputedStyle(document.documentElement).getPropertyValue("--paper").trim();
+function applyTheme(pref) {
+  html.dataset.themePref = pref;
+  html.dataset.theme = pref === "system" ? (dark.matches ? "dark" : "light") : pref;
+  const color = getComputedStyle(html).getPropertyValue("--paper").trim();
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", color);
+}
+
+export function setThemePref(pref) {
+  if (!THEMES.includes(pref)) return;
+  save(THEME_KEY, pref);
+  applyTheme(pref);
   emit();
 }
+
+export function setFont(font) {
+  if (!FONTS.includes(font)) return;
+  save(FONT_KEY, font);
+  if (font === "field") delete html.dataset.font;
+  else html.dataset.font = font;
+  emit();
+}
+
+dark.addEventListener("change", () => {
+  if (getThemePref() !== "system") return;
+  applyTheme("system");
+  emit();
+});
 
 export function hintSeen() {
   try {

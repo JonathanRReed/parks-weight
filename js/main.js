@@ -1,6 +1,6 @@
 import { $, $$ } from "./util.js";
 import { getPlace, loadCore, loadLands, ordered, places } from "./data.js";
-import { getTheme, setTheme } from "./store.js";
+import { initPrefs } from "./prefs.js";
 import { initCompare } from "./compare.js";
 import { initChooser } from "./chooser.js";
 import { initPlace } from "./place.js";
@@ -158,17 +158,7 @@ async function boot() {
     navigate("compare");
   });
 
-  const themeButton = $("#themeBtn");
-  const syncTheme = () => {
-    const dark = getTheme() === "dark";
-    themeButton.setAttribute("aria-pressed", String(dark));
-    themeButton.setAttribute("aria-label", dark ? "Switch to the sandstone theme" : "Switch to the forest theme");
-  };
-  themeButton.addEventListener("click", () => {
-    setTheme(getTheme() === "dark" ? "light" : "dark");
-    syncTheme();
-  });
-  syncTheme();
+  initPrefs();
 
   route();
   document.documentElement.classList.add("ready");

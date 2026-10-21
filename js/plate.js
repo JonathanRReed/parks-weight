@@ -7,10 +7,21 @@ const NICE_MILES = [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 10
 const PALETTE_KEYS = ["paper", "paper-2", "ink", "ink-soft", "big", "small", "accent", "accent-ink", ...KINDS.map((k) => `k-${k.id}`)];
 
 export const livePalette = Object.fromEntries(PALETTE_KEYS.map((k) => [k, `var(--${k})`]));
-export const liveFonts = { serif: "var(--serif)", sans: "var(--sans)" };
+// Average advance of a place name at 19px, used to decide whether a label fits in the margin.
+const LABEL_ADVANCE = { classic: 9.3, dyslexic: 12.6 };
+export const liveFonts = {
+  serif: "var(--serif)",
+  sans: "var(--sans)",
+  ital: "var(--ital)",
+  get advance() {
+    return LABEL_ADVANCE[document.documentElement.dataset.font] ?? 7.8;
+  },
+};
 export const exportFonts = {
   serif: "'Instrument Serif', Georgia, serif",
   sans: "'Hanken Grotesk', system-ui, sans-serif",
+  ital: "italic",
+  advance: 7.8,
 };
 
 export function readPalette(theme) {
@@ -261,6 +272,8 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
 
   const serif = fonts.serif;
   const sans = fonts.sans;
+  const ital = fonts.ital ?? "italic";
+  const advance = fonts.advance ?? 7.8;
 
   const clampY = (y) => Math.min(Math.max(y, m + 26), height - m - 50);
   const callout = (n, name, point, side, ringed = false) => {
@@ -268,12 +281,12 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
     const [px, rawY] = toPx(point);
     const py = clampY(rawY);
     const edge = m + 16;
-    const textWidth = name.length * 7.8;
+    const textWidth = name.length * advance;
     const room = side === "left" ? px - edge : width - edge - px;
     const dot = `<circle cx="${n1(px)}" cy="${n1(rawY)}" r="3.2" style="fill:${ink}"/>`;
     const badge = (cx, cy) =>
       `<circle cx="${n1(cx)}" cy="${n1(cy)}" r="${r}" style="fill:${pal.paper};stroke:${ink};stroke-width:1"/>` +
-      `<text x="${n1(cx)}" y="${n1(cy)}" text-anchor="middle" dominant-baseline="central" style="font:italic 14px ${serif};fill:${ink}">${n}</text>`;
+      `<text x="${n1(cx)}" y="${n1(cy)}" text-anchor="middle" dominant-baseline="central" style="font:${ital} 14px ${serif};fill:${ink}">${n}</text>`;
     if (!labels || room < 2 * r + 8 + textWidth + 30) {
       const gap = ringed ? 34 : 0;
       const lifted = ringed ? clampY(rawY - gap < m + 26 ? rawY + gap : rawY - gap) : py;
@@ -281,7 +294,7 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
       const link = `<line x1="${n1(px)}" y1="${n1(rawY)}" x2="${n1(cx)}" y2="${n1(lifted)}" style="stroke:${ink};stroke-width:1"/>`;
       const inward = side === "left" ? 1 : -1;
       const haloed = labels
-        ? `<text x="${n1(cx + inward * (r + 7))}" y="${n1(lifted)}" text-anchor="${side === "left" ? "start" : "end"}" dominant-baseline="central" style="font:italic 19px ${serif};fill:${ink};paint-order:stroke;stroke:${pal.paper};stroke-width:5px;stroke-linejoin:round">${esc(name)}</text>`
+        ? `<text x="${n1(cx + inward * (r + 7))}" y="${n1(lifted)}" text-anchor="${side === "left" ? "start" : "end"}" dominant-baseline="central" style="font:${ital} 19px ${serif};fill:${ink};paint-order:stroke;stroke:${pal.paper};stroke-width:5px;stroke-linejoin:round">${esc(name)}</text>`
         : "";
       return link + dot + badge(cx, lifted) + haloed;
     }
@@ -294,7 +307,7 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
       `<line x1="${n1(lineStart)}" y1="${n1(py)}" x2="${n1(px)}" y2="${n1(rawY)}" style="stroke:${ink};stroke-width:1"/>` +
       dot +
       badge(badgeX, py) +
-      `<text x="${n1(textX)}" y="${n1(py)}" text-anchor="${side === "left" ? "start" : "end"}" dominant-baseline="central" style="font:italic 19px ${serif};fill:${ink}">${esc(name)}</text>`
+      `<text x="${n1(textX)}" y="${n1(py)}" text-anchor="${side === "left" ? "start" : "end"}" dominant-baseline="central" style="font:${ital} 19px ${serif};fill:${ink}">${esc(name)}</text>`
     );
   };
 
@@ -320,7 +333,7 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
   const ny = height - m - 40;
   parts.push(
     `<path d="M${nx} ${ny - 12}L${nx + 6} ${ny + 8}L${nx} ${ny + 4}L${nx - 6} ${ny + 8}Z" style="fill:${ink}"/>` +
-      `<text x="${nx}" y="${ny + 22}" text-anchor="middle" style="font:italic 14px ${serif};fill:${ink}">N</text>`,
+      `<text x="${nx}" y="${ny + 22}" text-anchor="middle" style="font:${ital} 14px ${serif};fill:${ink}">N</text>`,
   );
 
   const label = title || (small ? `${big.name} and ${small.name} drawn at the same scale` : `${big.name} outline`);
