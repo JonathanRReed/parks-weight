@@ -1,10 +1,10 @@
 # Parks and Scale
 
-Compare U.S. parks and forests at the same scale. Overlay two outlines, browse the map, mark visits, save places, and export printable SVG art.
+Put two U.S. parks, monuments, forests or state parks side by side at the same scale. Map the places you've been, browse the field guide, and print them as art.
 
 ## Run locally
 
-Serve this directory with a static HTTP server, then open `index.html`. For example, with Python installed:
+Serve this directory with a static HTTP server, then open `index.html`:
 
 ```bash
 python3 -m http.server 8000
@@ -14,10 +14,25 @@ Open `http://localhost:8000`. There is no package install or build step.
 
 ## Files
 
-`index.html` loads `app.js` and `style.css`. The JSON files contain park records, land records, and map outlines; `rebuild_lands.py` maintains land data.
+- `index.html` and `style.css` hold the markup and all styling. Sandstone (light) and forest (dark) are two token sets at the top of `style.css`.
+- `js/` is plain ES modules. `main.js` boots the app and routes by URL hash. `data.js` loads and indexes places. `plate.js` draws the comparison plate and is shared by the compare view, place sheet and print art. `usmap.js` is the clustered US map, `guide.js` the field guide, `art.js` the posters.
+- `fonts/` holds the self-hosted Instrument Serif and Hanken Grotesk files. Nothing loads from a third-party host.
+- `parks.json` and `shapes.json` hold the 63 national parks. `lands.json` and `land-shapes.json` hold monuments, recreation areas, national forests, state forests and state parks, and load after first paint. `us-states.json` holds state outlines for the map.
+
+## Rebuilding data
+
+`rebuild_lands.py` regenerates the land files from public boundary services.
+
+```bash
+python3 rebuild_lands.py             # national forests, state forests, state parks
+python3 rebuild_lands.py --federal   # then add national monuments and NPS recreation areas
+python3 rebuild_lands.py --states    # state outlines for the US map
+```
+
+The plain run replaces `lands.json`, so run `--federal` after it. The script writes next to itself.
 
 ## Data and limits
 
-National park acreage and visitor counts use 2023 NPS figures. Forest and state-park outlines use USFS administrative boundaries and USGS PAD-US. Small islands are omitted from rendered outlines. Use the maps for comparison, not precise boundary work.
+National park acreage and visitor counts use 2023 NPS figures. Monument and recreation area outlines come from the NPS. Forest and state-park outlines use USFS administrative boundaries and USGS PAD-US. Small islands are omitted from rendered outlines. A few remote marine monuments have no state and no map position. Use the maps for comparison, not precise boundary work.
 
-Visited and saved places stay on the current device. The page loads fonts from Google Fonts. This is not an official NPS, USFS, or USGS site.
+Visited and saved places stay on the current device. This is not an official NPS, USFS, or USGS site.

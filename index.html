@@ -1,187 +1,139 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0c0e0c">
-  <meta name="description" content="Parks and Scale: true-size maps of U.S. national parks, national forests, state forests, and state parks.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f1e9d6">
+  <meta name="color-scheme" content="light dark">
+  <title>Parks and Scale: the true size of U.S. parks and forests</title>
+  <meta name="description" content="Put two U.S. national parks, monuments, forests or state parks side by side at the same scale. Map the places you've been and print them.">
   <link rel="canonical" href="https://jonathanrreed.github.io/parks-weight/">
-  <title>Parks and Scale — the true size of U.S. parks and forests</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Parks and Scale">
+  <meta property="og:description" content="The true size of U.S. parks and forests, side by side at the same scale.">
+  <meta property="og:url" content="https://jonathanrreed.github.io/parks-weight/">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232b6a52'/%3E%3Cpath d='M6 22l6-10 5 7 3-4 6 7z' fill='%23f1e9d6'/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/instrument-serif-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/hanken-grotesk-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
+  <script>
+    (function () {
+      var theme;
+      try { theme = localStorage.getItem("pas-theme"); } catch (e) {}
+      if (theme !== "dark" && theme !== "light") {
+        theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.dataset.theme = theme;
+      document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#18281f" : "#f1e9d6";
+    })();
+  </script>
+  <script type="module" src="js/main.js"></script>
 </head>
 <body>
-  <svg class="sprites" aria-hidden="true" focusable="false">
-    <symbol id="i-stack" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M4 14l8 4 8-4M4 10l8 4 8-4M4 6l8 4 8-4"/></symbol>
-    <symbol id="i-pin" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M12 21s7-5.4 7-11a7 7 0 10-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
-    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" d="M20 20l-3-3"/></symbol>
-    <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M6 6l12 12M18 6L6 18"/></symbol>
-    <symbol id="i-swap" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M7 7h11M15 3l4 4-4 4M17 17H6M9 13l-4 4 4 4"/></symbol>
-    <symbol id="i-shuffle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M16 3h5v5M4 20l6-6M21 3l-8 8M16 21h5v-5M15 15l6 6"/></symbol>
-    <symbol id="i-north" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3l4 8h-3v10h-2V11H8z"/></symbol>
-    <symbol id="i-land" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M3 18l5-8 4 5 3-4 6 7H3z"/></symbol>
-    <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" d="M5 12l5 5 9-10"/></symbol>
-    <symbol id="i-bookmark" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M7 4h10v16l-5-3-5 3z"/></symbol>
+  <svg class="sprites" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs><path id="waffle-shape"/></defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M7 4h10v16l-5-3.2L7 20z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M16 16l4 4"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M5 12h14"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M7 9V4h10v5M7 17H4v-7h16v7h-3M7 14h10v6H7z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7h3.5c4 0 5 10 9 10H20M4 17h3.5c1.4 0 2.4-1.2 3.3-2.7M13.2 9.3C14 8 15 7 16.5 7H20M17.5 4.5L20 7l-2.5 2.5M17.5 14.5L20 17l-2.5 2.5"/></symbol>
+    <symbol id="i-theme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="currentColor" d="M12 4a8 8 0 010 16z"/></symbol>
   </svg>
 
-  <div id="onboard" class="onboard" hidden>
-    <div class="onboard-card">
-      <p class="kicker"><svg><use href="#i-stack"/></svg> How to read this</p>
-      <h2 id="obTitle"></h2>
-      <p id="obCopy"></p>
-      <div class="onboard-nav">
-        <button type="button" class="ghost" id="obSkip">Skip</button>
-        <button type="button" class="primary" id="obNext">Next</button>
-      </div>
-      <p class="dots" id="obDots"></p>
-    </div>
-  </div>
-
-  <header>
-    <p class="brand"><svg><use href="#i-stack"/></svg> Parks and Scale</p>
-    <p class="progress" id="progress">0 visited</p>
-    <div class="tools">
-      <button type="button" id="btnMap" class="ghost"><svg><use href="#i-land"/></svg> US Map</button>
-      <button type="button" id="btnShuffle"><svg><use href="#i-shuffle"/></svg> Random pair</button>
-      <button type="button" id="btnHelp"><svg><use href="#i-stack"/></svg> How this works</button>
-    </div>
+  <header class="top">
+    <a class="brand" href="#/compare" aria-label="Parks and Scale, home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M2.5 26L12 6l6 11 3-5 8.5 14z"/><path class="inner" d="M13 26l5-9 3.5 6 1.5-2.5L26 26z"/></svg>
+      <span>Parks and Scale</span>
+    </a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#/compare" data-view="compare">Compare</a>
+      <a href="#/map" data-view="map">US map</a>
+      <a href="#/guide" data-view="guide">Field guide</a>
+    </nav>
+    <button type="button" class="icon-btn" id="themeBtn" aria-pressed="false" aria-label="Switch theme"><svg class="icon" aria-hidden="true"><use href="#i-theme"/></svg></button>
   </header>
 
   <main>
-    <h1>The true size of parks and forests.</h1>
-    <p class="lead">National parks, national forests, state forests, and state parks on one scale. Overlay any two. Check off where you’ve been.</p>
+    <p id="loadError" class="notice" role="alert" hidden>The park data didn't load. Check your connection and reload the page.</p>
+    <p id="landsError" class="notice" role="status" hidden>Monuments, forests and state parks didn't load. National parks still work.</p>
+    <noscript><p class="notice">Parks and Scale needs JavaScript to draw the maps.</p></noscript>
 
-    <div class="pickers">
-      <button type="button" class="picker" id="pickBig">
-        <span class="photo" id="bigPhoto"></span>
-        <span>
-          <small><svg><use href="#i-land"/></svg> Larger</small>
-          <strong id="bigName">Yellowstone</strong>
-        </span>
-      </button>
-      <button type="button" class="icon-btn" id="btnSwap" title="Swap parks"><svg><use href="#i-swap"/></svg></button>
-      <button type="button" class="picker" id="pickSmall">
-        <span class="photo" id="smallPhoto"></span>
-        <span>
-          <small><svg><use href="#i-pin"/></svg> Smaller</small>
-          <strong id="smallName">Arches</strong>
-        </span>
-      </button>
-    </div>
-
-    <section class="workspace">
-      <div class="stage">
-        <svg id="map" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Two land maps stacked at true size"></svg>
-        <p class="north" title="North is up"><svg><use href="#i-north"/></svg> N</p>
-        <div id="mapChrome" class="map-chrome" hidden>
-          <div class="map-legend" id="mapLegend"></div>
-          <div class="map-actions">
-            <label class="map-check"><input type="checkbox" id="focusState"> This state only</label>
-            <label class="map-check"><input type="checkbox" id="connectVisited"> Connect visited</label>
-            <button type="button" class="ghost compact" id="btnFit">Fit markers</button>
-            <button type="button" class="primary compact" id="btnArt">Print art</button>
-          </div>
-        </div>
-        <p class="hint" id="hint"></p>
-      </div>
-      <aside class="facts" id="factsPanel">
-        <p class="kicker" id="factKicker"></p>
-        <h2 id="factName"></h2>
-        <dl id="factStats"></dl>
-        <p id="factCopy"></p>
-        <p class="extra" id="factExtra"></p>
-        <button type="button" class="text-link" id="openDossier">Open page →</button>
-      </aside>
-    </section>
-
-    <p class="punch" id="punch"></p>
-    <p class="note" id="pairNote"></p>
-
-    <section class="chooser" id="chooser" hidden>
-      <div class="chooser-bar">
-        <h2 id="chooserTitle">Pick a place</h2>
-        <button type="button" class="icon-btn" id="closeChooser" title="Close"><svg><use href="#i-x"/></svg></button>
-      </div>
-      <div class="filters" id="chooserKinds"></div>
-      <label class="search">
-        <svg><use href="#i-search"/></svg>
-        <input id="search" type="search" placeholder="Search parks and forests">
-      </label>
-      <div class="cards" id="chooserCards"></div>
-    </section>
-
-    <section class="all">
-      <div class="atlas-head">
-        <div>
-          <h2>The field guide</h2>
-          <p class="lead">Open a place to read it. Check it if you’ve been. Bookmark it if you want to go.</p>
+    <section class="view" data-view="compare" aria-labelledby="compareTitle">
+      <h1 class="sr-only" id="compareTitle">Compare the true size of two places</h1>
+      <p id="hint" class="hint" hidden>
+        <span>Both shapes share one scale. Tap a shape for the details.</span>
+        <button type="button" class="text-btn" id="hintClose">Got it</button>
+      </p>
+      <div class="compare">
+        <figure id="plate" class="plate" aria-label="Two places drawn at the same scale"></figure>
+        <div class="side">
+          <div id="captions" class="captions"></div>
+          <div id="fit" class="fit"></div>
+          <button type="button" class="btn" id="shuffle"><svg class="icon" aria-hidden="true"><use href="#i-shuffle"/></svg>Surprise me</button>
         </div>
       </div>
-      <div class="filters" id="filters"></div>
-      <div class="atlas-tools">
-        <select class="state-pick" id="statePick" aria-label="Filter by state">
-          <option value="">All states</option>
-        </select>
-      </div>
-      <p class="atlas-note" id="atlasNote"></p>
-      <label class="search atlas-search">
-        <svg><use href="#i-search"/></svg>
-        <input id="atlasSearch" type="search" placeholder="Find a park or forest">
-      </label>
-      <div class="cards" id="allCards"></div>
     </section>
 
-    <section class="about">
-      <h2>How to read it</h2>
-      <p>Both shapes share one scale, north-up. A speck is a speck. Checkmarks and saved places live only on this phone or computer. National park acreage and visitors are 2023 NPS figures. Forest and state-park outlines come from USFS administrative boundaries and USGS PAD-US. Tiny islands are dropped so phones don’t melt. Not an official NPS or Forest Service site.</p>
+    <section class="view" data-view="map" aria-labelledby="mapTitle" hidden>
+      <h1 class="sr-only" id="mapTitle">Map of U.S. parks and forests</h1>
+      <div id="mapTools" class="tools"></div>
+      <div id="mapStage" class="map-stage">
+        <svg id="usMap" role="img" aria-label="Map of the United States with parks and forests marked"></svg>
+        <div id="mapZoom" class="map-zoom"></div>
+        <div id="mapScale" class="map-scale"><i></i><span></span></div>
+        <div id="mapPopover" class="map-popover" hidden></div>
+      </div>
+      <p id="mapStatus" class="status" role="status"></p>
+    </section>
+
+    <section class="view" data-view="guide" aria-labelledby="guideTitle" hidden>
+      <h1 class="sr-only" id="guideTitle">Field guide</h1>
+      <div id="passport" class="passport"></div>
+      <div id="guideControls" class="tools"></div>
+      <p id="guideCount" class="status" role="status"></p>
+      <ul id="guideGrid" class="cards"></ul>
+      <button type="button" class="btn center" id="guideMore" hidden></button>
     </section>
   </main>
 
-  <section class="dossier" id="dossier" hidden>
-    <div class="dossier-inner">
-      <div class="dossier-bar">
-        <p class="kicker">Place page</p>
-        <button type="button" class="icon-btn" id="closeDossier" title="Close"><svg><use href="#i-x"/></svg></button>
-      </div>
-      <div class="dossier-hero">
-        <div class="photo tall" id="dossierMap"></div>
-        <div>
-          <p class="kicker" id="dossierKicker"></p>
-          <h2 id="dossierName"></h2>
-          <div class="dossier-actions">
-            <button type="button" class="ghost" id="beenHere"><svg><use href="#i-check"/></svg> Been here</button>
-            <button type="button" class="ghost" id="savePark"><svg><use href="#i-bookmark"/></svg> Save</button>
-            <button type="button" class="primary" id="comparePark">Compare size</button>
-          </div>
-        </div>
-      </div>
-      <dl id="dossierStats"></dl>
-      <p id="dossierCopy"></p>
-      <ul class="fun" id="dossierFun"></ul>
-      <a id="dossierWiki" class="text-link" target="_blank" rel="noreferrer">Wikipedia ↗</a>
-    </div>
-  </section>
+  <footer class="foot">
+    <p>Boundaries from the National Park Service, the Forest Service and PAD-US. For reference, not affiliated with any agency.</p>
+  </footer>
 
-  <section class="art" id="artModal" hidden>
-    <div class="art-inner">
-      <div class="dossier-bar">
-        <p class="kicker">Printable art</p>
-        <button type="button" class="icon-btn" id="closeArt" title="Close"><svg><use href="#i-x"/></svg></button>
-      </div>
-      <div class="art-tools">
-        <button type="button" class="chip kind" id="artUsa">USA visited</button>
-        <button type="button" class="chip kind" id="artPark">This park</button>
-        <label class="map-check"><input type="checkbox" id="artConnect" checked> Connect visited</label>
-        <button type="button" class="ghost compact" id="artDownload">Download SVG</button>
-        <button type="button" class="primary compact" id="artPrint">Print</button>
-      </div>
-      <div class="art-preview" id="artPreview"></div>
-    </div>
-  </section>
+  <dialog id="chooser" aria-labelledby="chooserTitle">
+    <header class="sheet-head">
+      <h2 id="chooserTitle">Pick a place</h2>
+      <button type="button" class="icon-btn" id="chooserClose" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </header>
+    <label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="chooserSearch" type="search" placeholder="Search by name or state" aria-label="Search places" autocomplete="off"></label>
+    <div id="chooserKinds" class="chips scroll" role="group" aria-label="Type"></div>
+    <ul id="chooserList" class="rows"></ul>
+  </dialog>
 
-  <footer>Parks and Scale · NPS, USFS, and PAD-US maps · for reference, not affiliation</footer>
-  <script src="app.js"></script>
+  <dialog id="place" tabindex="-1" autofocus>
+    <button type="button" class="icon-btn float" id="placeClose" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+    <div id="placeBody" class="sheet-body"></div>
+  </dialog>
+
+  <dialog id="art" class="wide" aria-labelledby="artTitle" tabindex="-1" autofocus>
+    <header class="sheet-head">
+      <h2 id="artTitle">Print art</h2>
+      <button type="button" class="icon-btn" id="artClose" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </header>
+    <div id="artOptions" class="art-options"></div>
+    <figure id="artPreview" class="art-preview"></figure>
+    <p id="artStatus" class="status" role="status"></p>
+    <div class="art-actions">
+      <button type="button" class="btn" id="artDownload"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>Download SVG</button>
+      <button type="button" class="btn primary" id="artPrint"><svg class="icon" aria-hidden="true"><use href="#i-print"/></svg>Print</button>
+    </div>
+  </dialog>
+
+  <div id="printHost" aria-hidden="true"></div>
 </body>
 </html>
