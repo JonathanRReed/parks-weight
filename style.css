@@ -566,6 +566,12 @@ main {
 .fit-unit {
   font-style: italic;
 }
+.fit-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-soft);
+}
 
 /* Toolbars shared by map and guide */
 .tools {

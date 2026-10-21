@@ -1,6 +1,6 @@
-import { $, el, fmt, icon, areaText } from "./util.js";
+import { $, el, fmt, icon, areaText, km2Of } from "./util.js";
 import { kindPlural, kindTotal, ordered, placeLine } from "./data.js";
-import { fitBox, liveFonts, livePalette, plateSvg } from "./plate.js";
+import { fitBox, liveFonts, livePalette, plateSvg, scatterNote, shapeD } from "./plate.js";
 import { dismissHint, hintSeen, onChange, toggleVisited, visited } from "./store.js";
 
 const MAX_ICONS = 60;
@@ -93,7 +93,7 @@ export function initCompare(ctx) {
   function caption(place, index) {
     const id = place.id;
     const been = visited.has(id);
-    const area = areaText(place.km2);
+    const area = areaText(km2Of(place));
     return el(
       "article",
       { class: "caption" },
@@ -137,24 +137,27 @@ export function initCompare(ctx) {
     }
 
     captions.replaceChildren(caption(big, 0), caption(small, 1));
+    const noteText = [big, small].map(scatterNote).filter(Boolean).join(" ");
+    const note = () => (noteText ? el("p", { class: "fit-note" }, noteText) : "");
 
     const ratio = big.acres / small.acres;
     if (ratio < 1.05) {
-      fit.replaceChildren(el("p", { class: "fit-line" }, `${big.name} and ${small.name} are about the same size.`));
+      fit.replaceChildren(el("p", { class: "fit-line" }, `${big.name} and ${small.name} are about the same size.`), note());
       return;
     }
     const ratioEl = el("p", { class: "fit-ratio" }, el("strong", {}, `${ratioText(ratio)}×`));
     const line = `${big.name} is ${ratioText(ratio)} times the size of ${small.name}.`;
     if (ratio > MAX_DRAWN_RATIO) {
-      fit.replaceChildren(ratioEl, el("p", { class: "fit-line" }, line, el("span", { class: "fit-unit" }, " That's too many to draw.")));
+      fit.replaceChildren(ratioEl, el("p", { class: "fit-line" }, line, el("span", { class: "fit-unit" }, " That's too many to draw.")), note());
       return;
     }
-    $("#waffle-shape").setAttribute("d", small.shape.d);
+    $("#waffle-shape").setAttribute("d", shapeD(small));
     const { icons, unit } = waffle(small, ratio);
     fit.replaceChildren(
       ratioEl,
       el("div", { class: "waffle", role: "img", "aria-label": `${ratioText(ratio)} copies of ${small.name}` }, ...icons),
       el("p", { class: "fit-line" }, line, unit > 1 ? el("span", { class: "fit-unit" }, ` Each shape stands for ${fmt(unit)}.`) : null),
+      note(),
     );
   }
 

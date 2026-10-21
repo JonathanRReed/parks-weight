@@ -1,13 +1,13 @@
-import { $, el, fmt, icon, areaText } from "./util.js";
+import { $, el, fmt, icon, areaText, km2Of } from "./util.js";
 import { getPlace, kindPlural, kindTotal, placeLine, sizeNeighbors } from "./data.js";
-import { liveFonts, livePalette, plateSvg } from "./plate.js";
+import { liveFonts, livePalette, plateSvg, scatterNote } from "./plate.js";
 import { onChange, saved, toggleSaved, toggleVisited, visited } from "./store.js";
 
 function facts(place) {
   const rows = [
     ["Acres", areaText(place.acres)],
     ["Square miles", areaText(place.acres / 640)],
-    ["Square km", areaText(place.km2)],
+    ["Square km", areaText(km2Of(place))],
   ];
   if (place.states.length) rows.push(["Where", place.states.join(", ")]);
   if (place.visitors) rows.push(["Visitors in 2023", fmt(place.visitors)]);
@@ -53,8 +53,9 @@ export function initPlace(ctx) {
       labels: false,
       fill: { big: `var(--k-${p.kind})` },
     });
-    body.replaceChildren(
+    const blocks = [
       figure,
+      scatterNote(p) ? el("p", { class: "fit-note" }, scatterNote(p)) : null,
       el(
         "div",
         { class: "place-head" },
@@ -71,7 +72,8 @@ export function initPlace(ctx) {
         el("button", { type: "button", class: "btn", onclick: () => ctx.compareWith(p) }, "Compare size"),
         p.wiki ? el("a", { class: "btn", href: p.wiki, target: "_blank", rel: "noreferrer" }, "Wikipedia") : null,
       ),
-    );
+    ];
+    body.replaceChildren(...blocks.filter(Boolean));
   }
 
   dialog.addEventListener("click", (event) => {

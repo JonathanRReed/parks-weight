@@ -24,8 +24,82 @@ export function readPalette(theme) {
   return pal;
 }
 
+const SCATTER_RATIO = 10;
+const SCATTER_REACH = 5;
+const layouts = new WeakMap();
+
+function parseRings(d) {
+  const rings = [];
+  for (const chunk of d.split("M")) {
+    const nums = chunk.match(/-?\d+(?:\.\d+)?/g);
+    if (!nums || nums.length < 6) continue;
+    const bbox = [Infinity, Infinity, -Infinity, -Infinity];
+    let twice = 0;
+    for (let i = 0; i + 1 < nums.length; i += 2) {
+      const x = +nums[i];
+      const y = +nums[i + 1];
+      const j = (i + 2) % nums.length;
+      twice += x * +nums[j + 1] - +nums[j] * y;
+      bbox[0] = Math.min(bbox[0], x);
+      bbox[1] = Math.min(bbox[1], y);
+      bbox[2] = Math.max(bbox[2], x);
+      bbox[3] = Math.max(bbox[3], y);
+    }
+    rings.push({ d: `M${chunk}`, area: Math.abs(twice) / 2, bbox });
+  }
+  return rings;
+}
+
+const midpoint = (b) => [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+
+/**
+ * Places made of far-flung pieces (the California coastal rocks, for one) would shrink the
+ * whole plate to dots. Frame the largest cluster instead and re-center it on the plate origin.
+ */
+function layoutOf(place) {
+  const { shape } = place;
+  let hit = layouts.get(shape);
+  if (hit) return hit;
+  hit = { d: shape.d, box: shape.bbox, dx: 0, dy: 0, scattered: false, span: 0 };
+  if (shape.d.indexOf("M", 1) > 0) {
+    const rings = parseRings(shape.d);
+    const total = rings.reduce((sum, r) => sum + r.area, 0);
+    const span = Math.max(shape.bbox[2] - shape.bbox[0], shape.bbox[3] - shape.bbox[1]);
+    if (rings.length > 1 && total > 0 && span > SCATTER_RATIO * Math.sqrt(total)) {
+      rings.sort((a, b) => b.area - a.area);
+      const [lx, ly] = midpoint(rings[0].bbox);
+      const reach = SCATTER_REACH * Math.sqrt(total);
+      const kept = rings.filter((r) => {
+        const [x, y] = midpoint(r.bbox);
+        return Math.hypot(x - lx, y - ly) <= reach;
+      });
+      if (kept.length < rings.length) {
+        const box = kept.reduce(
+          (acc, r) => [Math.min(acc[0], r.bbox[0]), Math.min(acc[1], r.bbox[1]), Math.max(acc[2], r.bbox[2]), Math.max(acc[3], r.bbox[3])],
+          [Infinity, Infinity, -Infinity, -Infinity],
+        );
+        const [cx, cy] = midpoint(box);
+        hit = { d: kept.map((r) => r.d).join(""), box, dx: -cx, dy: -cy, scattered: true, span };
+      }
+    }
+  }
+  layouts.set(shape, hit);
+  return hit;
+}
+
+const placedBox = (l) => [l.box[0] + l.dx, l.box[1] + l.dy, l.box[2] + l.dx, l.box[3] + l.dy];
+
+export const shapeD = (place) => layoutOf(place).d;
+
+export function scatterNote(place) {
+  const l = layoutOf(place);
+  if (!l.scattered) return "";
+  const miles = Math.max(1, Math.round((l.span * KM_PER_UNIT) / 1.609344));
+  return `${place.name} is made of pieces spread over about ${fmt(miles)} miles, so the plate draws only its largest cluster.`;
+}
+
 export function fitBox(place, pad = 1.18) {
-  const [x1, y1, x2, y2] = place.shape.bbox;
+  const [x1, y1, x2, y2] = layoutOf(place).box;
   const size = Math.max(x2 - x1, y2 - y1, 24) * pad;
   const cx = (x1 + x2) / 2;
   const cy = (y1 + y2) / 2;
@@ -36,7 +110,7 @@ export function thumb(place) {
   return el(
     "svg",
     { class: "thumb", viewBox: fitBox(place), "aria-hidden": "true", focusable: "false" },
-    el("path", { d: place.shape.d, style: `fill:var(--k-${place.kind})` }),
+    el("path", { d: shapeD(place), style: `fill:var(--k-${place.kind})` }),
   );
 }
 
@@ -44,15 +118,17 @@ const edgeCache = new Map();
 function edgePoint(place, side) {
   const key = `${place.id}:${side}`;
   if (edgeCache.has(key)) return edgeCache.get(key);
-  const nums = place.shape.d.match(/-?\d+(?:\.\d+)?/g) || [];
+  const l = layoutOf(place);
+  const nums = l.d.match(/-?\d+(?:\.\d+)?/g) || [];
   let best = null;
   for (let i = 0; i + 1 < nums.length; i += 2) {
     const x = +nums[i];
     const y = +nums[i + 1];
     if (!best || (side === "left" ? x < best[0] : x > best[0])) best = [x, y];
   }
-  edgeCache.set(key, best || [0, 0]);
-  return edgeCache.get(key);
+  const point = best ? [best[0] + l.dx, best[1] + l.dy] : [0, 0];
+  edgeCache.set(key, point);
+  return point;
 }
 
 function hashSeed(text) {
@@ -130,9 +206,10 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
   const m = 10;
   const area = { x0: m + 20, y0: m + 20, x1: width - m - 20, y1: height - m - 42 };
   const shapes = small ? [big, small] : [big];
+  const lay = new Map(shapes.map((p) => [p, layoutOf(p)]));
   const box = shapes.reduce(
     (acc, p) => {
-      const b = p.shape.bbox;
+      const b = placedBox(lay.get(p));
       return [Math.min(acc[0], b[0]), Math.min(acc[1], b[1]), Math.max(acc[2], b[2]), Math.max(acc[3], b[3])];
     },
     [Infinity, Infinity, -Infinity, -Infinity],
@@ -150,24 +227,33 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
 
   const bigFill = fill?.big || pal.big;
   const smallFill = fill?.small || pal.small;
-  const shadowPaths = shapes.map((p) => `<path d="${p.shape.d}"/>`).join("");
+  const moved = (l) => (l.scattered ? ` transform="translate(${l.dx.toFixed(1)} ${l.dy.toFixed(1)})"` : "");
+  const shapePath = (p, role, style) => `<path${role ? ` data-role="${role}"` : ""} d="${lay.get(p).d}"${moved(lay.get(p))} style="${style}"/>`;
+  const shadowPaths = shapes.map((p) => `<path d="${lay.get(p).d}"${moved(lay.get(p))}/>`).join("");
+  const clipped = [...lay.values()].some((l) => l.scattered);
+  const clip = clipped ? ` clip-path="url(#${id}c)"` : "";
   const parts = [];
 
-  parts.push(`<defs><pattern id="${id}h" patternUnits="userSpaceOnUse" width="${hatchStep.toFixed(3)}" height="${hatchStep.toFixed(3)}" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="${hatchStep.toFixed(3)}" style="stroke:${ink};stroke-opacity:.3;stroke-width:${(0.9 / s).toFixed(4)}"/></pattern></defs>`);
+  const inner = m + 5;
+  parts.push(`<defs>${clipped ? `<clipPath id="${id}c"><rect x="${inner}" y="${inner}" width="${width - 2 * inner}" height="${height - 2 * inner}"/></clipPath>` : ""}<pattern id="${id}h" patternUnits="userSpaceOnUse" width="${hatchStep.toFixed(3)}" height="${hatchStep.toFixed(3)}" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="${hatchStep.toFixed(3)}" style="stroke:${ink};stroke-opacity:.3;stroke-width:${(0.9 / s).toFixed(4)}"/></pattern></defs>`);
   parts.push(plateFrame({ width, height, pal, seed: seed || big.id }));
 
-  parts.push(`<g transform="translate(3 3)" style="fill:${ink};fill-opacity:.17;stroke:none">${group(shadowPaths)}</g>`);
+  parts.push(`<g${clip}><g transform="translate(3 3)" style="fill:${ink};fill-opacity:.17;stroke:none">${group(shadowPaths)}</g></g>`);
   parts.push(
-    group(
-      `<path data-role="big" d="${big.shape.d}" style="${pathStyle(`fill:${bigFill};stroke:${ink};stroke-width:1.3`)}"/>` +
-        `<path data-role="big" d="${big.shape.d}" style="${pathStyle(`fill:url(#${id}h);stroke:none`)}"/>` +
-        (small ? `<path data-role="small" d="${small.shape.d}" style="${pathStyle(`fill:${smallFill};stroke:${ink};stroke-width:1.3`)}"/>` : ""),
-    ),
+    `<g${clip}>` +
+      group(
+        shapePath(big, "big", pathStyle(`fill:${bigFill};stroke:${ink};stroke-width:1.3`)) +
+          shapePath(big, "big", pathStyle(`fill:url(#${id}h);stroke:none`)) +
+          (small ? shapePath(small, "small", pathStyle(`fill:${smallFill};stroke:${ink};stroke-width:1.3`)) : ""),
+      ) +
+      `</g>`,
   );
 
+  let ringed = false;
   if (small) {
-    const sb = small.shape.bbox;
+    const sb = placedBox(lay.get(small));
     if (Math.max(sb[2] - sb[0], sb[3] - sb[1]) * s < 16) {
+      ringed = true;
       const [cx, cy] = toPx([(sb[0] + sb[2]) / 2, (sb[1] + sb[3]) / 2]);
       parts.push(`<circle cx="${n1(cx)}" cy="${n1(cy)}" r="13" style="fill:none;stroke:${smallFill};stroke-width:2"/>`);
     }
@@ -176,10 +262,11 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
   const serif = fonts.serif;
   const sans = fonts.sans;
 
-  const callout = (n, name, point, side) => {
+  const clampY = (y) => Math.min(Math.max(y, m + 26), height - m - 50);
+  const callout = (n, name, point, side, ringed = false) => {
     const r = 10;
     const [px, rawY] = toPx(point);
-    const py = Math.min(Math.max(rawY, m + 26), height - m - 50);
+    const py = clampY(rawY);
     const edge = m + 16;
     const textWidth = name.length * 7.8;
     const room = side === "left" ? px - edge : width - edge - px;
@@ -188,13 +275,15 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
       `<circle cx="${n1(cx)}" cy="${n1(cy)}" r="${r}" style="fill:${pal.paper};stroke:${ink};stroke-width:1"/>` +
       `<text x="${n1(cx)}" y="${n1(cy)}" text-anchor="middle" dominant-baseline="central" style="font:italic 14px ${serif};fill:${ink}">${n}</text>`;
     if (!labels || room < 2 * r + 8 + textWidth + 30) {
+      const gap = ringed ? 34 : 0;
+      const lifted = ringed ? clampY(rawY - gap < m + 26 ? rawY + gap : rawY - gap) : py;
       const cx = side === "left" ? Math.max(px - r - 8, m + r + 8) : Math.min(px + r + 8, width - m - r - 8);
-      const link = `<line x1="${n1(px)}" y1="${n1(rawY)}" x2="${n1(cx)}" y2="${n1(py)}" style="stroke:${ink};stroke-width:1"/>`;
+      const link = `<line x1="${n1(px)}" y1="${n1(rawY)}" x2="${n1(cx)}" y2="${n1(lifted)}" style="stroke:${ink};stroke-width:1"/>`;
       const inward = side === "left" ? 1 : -1;
       const haloed = labels
-        ? `<text x="${n1(cx + inward * (r + 7))}" y="${n1(py)}" text-anchor="${side === "left" ? "start" : "end"}" dominant-baseline="central" style="font:italic 19px ${serif};fill:${ink};paint-order:stroke;stroke:${pal.paper};stroke-width:5px;stroke-linejoin:round">${esc(name)}</text>`
+        ? `<text x="${n1(cx + inward * (r + 7))}" y="${n1(lifted)}" text-anchor="${side === "left" ? "start" : "end"}" dominant-baseline="central" style="font:italic 19px ${serif};fill:${ink};paint-order:stroke;stroke:${pal.paper};stroke-width:5px;stroke-linejoin:round">${esc(name)}</text>`
         : "";
-      return link + dot + badge(cx, py) + haloed;
+      return link + dot + badge(cx, lifted) + haloed;
     }
     const dir = side === "left" ? 1 : -1;
     const startX = side === "left" ? edge : width - edge;
@@ -211,7 +300,7 @@ export function plateSvg({ big, small = null, width, height, pal, fonts, seed = 
 
   if (small) {
     parts.push(callout(1, big.name, edgePoint(big, "left"), "left"));
-    parts.push(callout(2, small.name, edgePoint(small, "right"), "right"));
+    parts.push(callout(2, small.name, edgePoint(small, "right"), "right", ringed));
   }
 
   const pxPerMile = s * PX_PER_MILE_PER_SCALE;

@@ -1,4 +1,4 @@
-import { $, el, esc, fmt, areaText } from "./util.js";
+import { $, el, esc, fmt, areaText, km2Of } from "./util.js";
 import { getPlace, ordered, placeLine, places } from "./data.js";
 import { loadMapShapes, project } from "./geo.js";
 import { exportFonts, plateFrame, plateSvg, readPalette } from "./plate.js";
@@ -109,7 +109,7 @@ function placePoster(place, pal) {
       `<text x="82" y="196" style="font:22px ${exportFonts.sans};fill:${pal["ink-soft"]}">${esc(placeLine(place))}</text>` +
       `<g transform="translate(80 250)">${plate}</g>` +
       `<text x="80" y="1250" style="font:italic 46px ${exportFonts.serif};fill:${pal.ink}">${areaText(place.acres)} acres</text>` +
-      `<text x="82" y="1292" style="font:20px ${exportFonts.sans};fill:${pal["ink-soft"]}">${areaText(place.km2)} km². Same scale as every Parks and Scale plate.</text>` +
+      `<text x="82" y="1292" style="font:20px ${exportFonts.sans};fill:${pal["ink-soft"]}">${areaText(km2Of(place))} km². Same scale as every Parks and Scale plate.</text>` +
       (been ? `<text x="82" y="1345" style="font:italic 34px ${exportFonts.serif};fill:${pal.accent}">Been here</text>` : ""),
   );
 }
